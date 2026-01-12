@@ -266,7 +266,11 @@ int main() {
         if (ImGui::Button("Print test")) {
             printf("Button pressed\n");
         }
+        // Camera settings
         ImGui::Checkbox("Camera Rotation", &mainCamera.enableRotation);
+        ImGui::SliderFloat("Camera sensitivity", &mainCamera.mouseSensitivity, 0.0001f, 0.01f);
+
+
         std::string wireName = "Draw Mode: " + append;
         if (ImGui::Button(wireName.c_str())) {
             if (drawMode == GL_TRIANGLES) {

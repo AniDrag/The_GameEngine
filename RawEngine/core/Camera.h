@@ -17,8 +17,8 @@ namespace core {
 		glm::vec3 up;
 
 		//rotation stuff
-		float yaw;
-		float pitch;
+		double mouseX, mouseY;
+		float yaw,pitch;
 		float mouseSensitivity;
 		bool enableRotation = true;
 
@@ -27,14 +27,13 @@ namespace core {
 		float	deltaTime;
 		float	currentTime;
 
-		float buttonTimer;
 
 
 		//Initialization
 		Camera();
-
 		glm::mat4 GetViewMatrix() const;
 		void CameraMovement(GLFWwindow* window);
+		void ProcessInput(GLFWwindow* window);
 	};
 }
 

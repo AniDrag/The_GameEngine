@@ -16,7 +16,7 @@ namespace core {
 
         yaw = -90.0f;    // looking down -Z
         pitch = 0.0f;
-        mouseSensitivity = 0.1f;
+        mouseSensitivity = 0.004f;
 
         view = glm::mat4(1);
     }
@@ -68,33 +68,9 @@ namespace core {
    //    view = glm::lookAt(position, lookPivot, up);
    //}
     void Camera::CameraMovement(GLFWwindow* window) {
-        // --------- time and deltaTime ---------
-        finishFrameTime = glfwGetTime();
-        deltaTime = static_cast<float>(finishFrameTime - currentTime);
-        currentTime = finishFrameTime;
-
-        // ---------- Mouse input ----------
-        static double lastX = 0.0, lastY = 0.0;
-        static bool firstMouse = true;
-
-        double mouseX, mouseY;
-        glfwGetCursorPos(window, &mouseX, &mouseY);
-        if (firstMouse) {
-            lastX = mouseX;
-            lastY = mouseY;
-            firstMouse = false;
-        }
-
-        float dx = float(mouseX - lastX);
-        float dy = float(lastY - mouseY); // invert Y
-
-        lastX = mouseX;
-        lastY = mouseY;
-
-        const float sensitivity = 0.0025f;
-
-        float yaw = dx * sensitivity;
-        float pitch = dy * sensitivity;
+        
+        // Procesing all inputs 
+        Camera::ProcessInput(window);       
 
         // ---------- Direction from camera to pivot ----------
         glm::vec3 dir = glm::normalize(lookPivot - position);
@@ -129,8 +105,20 @@ namespace core {
             lookPivot = position + forward;
         }
 
+
+        // ---------- Re-sync pivot after movement ----------
+        lookPivot = position + forward;
+
+        // ---------- View matrix ----------
+        view = glm::lookAt(position, lookPivot, up);
+    }
+    void Camera::ProcessInput(GLFWwindow* window) {
+        // --------- time and deltaTime ---------
+        finishFrameTime = glfwGetTime();
+        deltaTime = static_cast<float>(finishFrameTime - currentTime);
+        currentTime = finishFrameTime;
         // ---------- Keyboard movement ----------
-       
+
         const float speed = 5.0f * deltaTime;
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -151,6 +139,28 @@ namespace core {
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             position -= speed * globalUp;
 
+        // ---------- Mouse input ----------
+        //efficiency sake so we dont calculate for no reason repetedly a non movable camera
+        if (enableRotation) {
+            static double lastX = 0.0, lastY = 0.0;
+            static bool firstMouse = true;
+
+            glfwGetCursorPos(window, &mouseX, &mouseY);
+            if (firstMouse) {
+                lastX = mouseX;
+                lastY = mouseY;
+                firstMouse = false;
+            }
+
+            float dx = float(mouseX - lastX);
+            float dy = float(lastY - mouseY); // invert Y
+
+            lastX = mouseX;
+            lastY = mouseY;
+
+            yaw = dx * mouseSensitivity;
+            pitch = dy * mouseSensitivity;
+        }
         // ---------- TAB key edge detection ----------
         static bool tabWasDown = false;
         bool tabIsDown = glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
@@ -165,17 +175,10 @@ namespace core {
                 enableRotation ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL
             );
             ImGui::GetIO().MouseDrawCursor = !enableRotation;
+            
         }
-
         tabWasDown = tabIsDown;
-
-        // ---------- Re-sync pivot after movement ----------
-        lookPivot = position + forward;
-
-        // ---------- View matrix ----------
-        view = glm::lookAt(position, lookPivot, up);
     }
-
 
     
 
