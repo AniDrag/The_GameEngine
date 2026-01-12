@@ -142,6 +142,7 @@
     <ClInclude Include="core\model.h" />
     <ClInclude Include="core\texture.h" />
     <ClInclude Include="core\vertex.h" />
+    <ClInclude Include="shaders\shader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.fs" />
