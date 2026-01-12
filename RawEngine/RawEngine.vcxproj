@@ -143,6 +143,12 @@
     <ClInclude Include="core\texture.h" />
     <ClInclude Include="core\vertex.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\fragment.fs" />
+    <None Include="shaders\modelVertex.vs" />
+    <None Include="shaders\texture.fs" />
+    <None Include="shaders\vertex.vs" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

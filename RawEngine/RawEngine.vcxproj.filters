@@ -22,6 +22,9 @@
     <Filter Include="Header Files\render">
       <UniqueIdentifier>{4d338f06-1069-4ad9-8a02-ca078bcd5ac5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{20a27b86-6c21-427f-9996-d9fc6823f382}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RawEngine.cpp">
@@ -65,5 +68,19 @@
     <ClInclude Include="core\Camera.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\fragment.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="shaders\modelVertex.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="shaders\texture.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="shaders\vertex.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

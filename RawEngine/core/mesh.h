@@ -9,7 +9,7 @@ namespace core {
     private:
         std::vector<Vertex> vertices;
         std::vector<GLuint> indices;
-        GLuint VAO;
+        GLuint VAO;// Vertex buffer Object
         GLuint VBO;
         GLuint EBO;
     public:

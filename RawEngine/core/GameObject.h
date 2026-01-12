@@ -2,7 +2,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 #include <glad/glad.h>
-#include "core/model.h"
+#include "model.h"
 namespace core { class Model; }
 
 namespace core {
