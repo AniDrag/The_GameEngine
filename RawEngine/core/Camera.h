@@ -1,15 +1,13 @@
 #pragma once
-#define GLM_ENABLE_EXPERIMENTAL
-#include<glm/vec3.hpp>
-#include<glm/gtx/normalize_dot.hpp>
+#include <glm/vec3.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
-namespace core{
+#include <GLFW/glfw3.h>
+namespace core {
 
-	class Camera{
+	class Camera {
 	private:
-		glm::mat4 camMVP;
+		glm::mat4 view;
 	public:
-		
 
 		glm::vec3 globalUp;
 		glm::vec3 position;
@@ -18,18 +16,25 @@ namespace core{
 		glm::vec3 right;
 		glm::vec3 up;
 
-		//Initialization
-		Camera() {
-			position = glm::vec3(0.0f, 0.0f, 10.0f);
-			lookPivot = glm::vec3(0.0f, 0.0f, 0.0f);
-			forward = glm::vec3(0, 0, -1);//glm::normalize(position - lookPivot);
-			globalUp = glm::vec3(0.0f, 1.0f, 0.0f);
-			right = glm::normalize(glm::cross(globalUp, forward));
-			up = glm::cross(forward, right);
-			camMVP;
-		}
+		//rotation stuff
+		float yaw;
+		float pitch;
+		float mouseSensitivity;
+		bool enableRotation = true;
 
-		glm::mat4 GetModelViewMatrix() const;
+		//deltatimers;
+		float finishFrameTime;
+		float	deltaTime;
+		float	currentTime;
+
+		float buttonTimer;
+
+
+		//Initialization
+		Camera();
+
+		glm::mat4 GetViewMatrix() const;
+		void CameraMovement(GLFWwindow* window);
 	};
 }
 

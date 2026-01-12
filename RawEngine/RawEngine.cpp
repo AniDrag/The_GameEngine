@@ -42,52 +42,52 @@ void framebufferSizeCallback(GLFWwindow* window,
     g_height = height;
     glViewport(0, 0, width, height);
 }
-class Scene {
-    private:
-        int modelIndex = 0;// amount of models
-        int texturesIdex = 0; // amount of textures
-        std::vector<core::Model*> modelCollection; // store pointers
-        std::vector<core::Texture*> textures;
-    public:
-
-
-        void AddModel(core::Model* model) {
-            modelCollection.push_back(model);
-            modelIndex++;
-        }
-
-        void RemoveModel(core::Model* model) {
-            auto it = std::find(modelCollection.begin(), modelCollection.end(), model);
-            if (it != modelCollection.end()) {
-                modelCollection.erase(it);
-                modelIndex--;
-            }
-        }
-
-        void AddTexture(core::Texture* texture) {
-            textures.push_back(texture);
-            texturesIdex++;
-        }
-        void RemoveTexture(core::Texture* & texture) {
-            auto it = std::find(textures.begin(), textures.end(), texture);
-            if (it != textures.end()) {
-                textures.erase(it);
-                texturesIdex--;
-            }
-        }
-
-        void LoadScene(glm::vec3* lightPos, GLuint  modelShaderProgram, GLuint textureShaderProgram) {
-            for (int i = 0; i < modelIndex; i++) {
-
-                glUseProgram(modelShaderProgram);
-                glUniform3fv(lightPosUniform, 1, glm::value_ptr(lightPos));
-                glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne.getModelMatrix()));
-                glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(suzanne.getModelMatrix()));
-                suzanne.render(drawMode);
-            }
-            
-        }
-    };
+//class Scene {
+//1    private:
+//        int modelIndex = 0;// amount of models
+//        int texturesIdex = 0; // amount of textures
+//        std::vector<core::Model*> modelCollection; // store pointers
+//        std::vector<core::Texture*> textures;
+//    public:
+//
+//
+//        void AddModel(core::Model* model) {
+//            modelCollection.push_back(model);
+//            modelIndex++;
+//        }
+//
+//        void RemoveModel(core::Model* model) {
+//            auto it = std::find(modelCollection.begin(), modelCollection.end(), model);
+//            if (it != modelCollection.end()) {
+//                modelCollection.erase(it);
+//                modelIndex--;
+//            }
+//        }
+//
+//        void AddTexture(core::Texture* texture) {
+//            textures.push_back(texture);
+//            texturesIdex++;
+//        }
+//        void RemoveTexture(core::Texture* & texture) {
+//            auto it = std::find(textures.begin(), textures.end(), texture);
+//            if (it != textures.end()) {
+//                textures.erase(it);
+//                texturesIdex--;
+//            }
+//        }
+//
+//        void LoadScene(glm::vec3* lightPos, GLuint  modelShaderProgram, GLuint textureShaderProgram) {
+//            for (int i = 0; i < modelIndex; i++) {
+//
+//                glUseProgram(modelShaderProgram);
+//                glUniform3fv(lightPosUniform, 1, glm::value_ptr(lightPos));
+//                glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne.getModelMatrix()));
+//                glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(suzanne.getModelMatrix()));
+//                suzanne.render(drawMode);
+//            }
+//            
+//        }
+//    };
 
 std::string readFileToString(const std::string& filePath) {
     std::ifstream fileStream(filePath, std::ios::in);
@@ -115,48 +115,6 @@ GLuint generateShader(const std::string& shaderPath, GLuint shaderType) {
         printf("Error! Shader issue [%s]: %s\n", shaderPath.c_str(), infoLog);
     }
     return shader;
-}
-
-void CameraMovement(core::Camera& mainCamera, GLFWwindow* window, glm::mat4& view) {
-    // Recalculate the direction vectors ONCE per frame
-    mainCamera.forward = glm::normalize(mainCamera.lookPivot - mainCamera.position);
-    mainCamera.right = glm::normalize(glm::cross(mainCamera.forward, mainCamera.globalUp));
-    mainCamera.up = glm::normalize(glm::cross(mainCamera.right, mainCamera.forward));
-
-    // W/S - forward/backward
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        mainCamera.position += 0.01f * mainCamera.forward;
-        printf("Cam y:%f\n", mainCamera.position.z);
-    }
-    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        mainCamera.position -= 0.01f * mainCamera.forward;
-        printf("Cam y:%f\n", mainCamera.position.z);
-    }
-
-    // A/D - strafe left/right
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        mainCamera.position -= 0.01f * mainCamera.right;
-        printf("Cam y:%f\n", mainCamera.position.x);
-    }
-    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        mainCamera.position += 0.01f * mainCamera.right;
-        printf("Cam y:%f\n", mainCamera.position.x);
-    }
-
-
-    // Q/E - up/down
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        mainCamera.position += 0.01f * mainCamera.up;
-        printf("Cam y:%f\n", mainCamera.position.y);
-    }
-    else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        mainCamera.position -= 0.01f * mainCamera.up;
-        printf("Cam y:%f\n", mainCamera.position.y);
-    }
-
-    // Update lookPivot and view matrix
-    mainCamera.lookPivot = mainCamera.position + mainCamera.forward;
-    view = glm::lookAt(mainCamera.position, mainCamera.lookPivot, mainCamera.up);
 }
 
 int main() {
@@ -260,19 +218,19 @@ int main() {
     /// -----------------------------
     /// Scenes
     /// -----------------------------
-    Scene first;
-    first.AddModel(&suzanne);
-    first.AddTexture(&cmgtGatoTexture);
+   //Scene first;
+   //first.AddModel(&suzanne);
+   //first.AddTexture(&cmgtGatoTexture);
 
     /// -----------------------------
-    /// Camera Data
+    /// Camera(s) Data
     /// -----------------------------
     core::Camera mainCamera;
 
     /// -----------------------------
-    /// VP
+    /// View  &  Projection
     /// -----------------------------
-    glm::mat4 view = glm::lookAt(mainCamera.position, mainCamera.lookPivot, mainCamera.up);
+    glm::mat4 view = mainCamera.GetViewMatrix();
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
 
 
@@ -308,7 +266,7 @@ int main() {
         if (ImGui::Button("Print test")) {
             printf("Button pressed\n");
         }
-        
+        ImGui::Checkbox("Camera Rotation", &mainCamera.enableRotation);
         std::string wireName = "Draw Mode: " + append;
         if (ImGui::Button(wireName.c_str())) {
             if (drawMode == GL_TRIANGLES) {
@@ -375,7 +333,8 @@ int main() {
         
         suzanne.rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(rotationStrength) * static_cast<float>(deltaTime));
         
-        CameraMovement(mainCamera, window, view);
+        mainCamera.CameraMovement(window);
+        view = mainCamera.GetViewMatrix();
         
        // view = glm::lookAt(mainCamera.position, mainCamera.lookPivot, mainCamera.up);
         projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
