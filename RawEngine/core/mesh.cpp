@@ -7,23 +7,28 @@ namespace core {
 
     void Mesh::setupBuffers() {
 
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
+        // Creates OpenGL buffers:
+        glGenVertexArrays(1, &VAO);// Vertex Array Object
+        glGenBuffers(1, &VBO);// Vertex Buffer Object
+        glGenBuffers(1, &EBO);// Element Buffer Object
 
         glBindVertexArray(VAO); // ORIGINALLy it was here
 
+        // Uploads data to GPU:
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        // Send the vertices to the GPU:
+        // Vertex data (positions, normals, UVs)
         glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), &vertices[0],
                      GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);// Indices (triangle definitions)
         // Send the triangle point indices to the GPU:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizei>(sizeof(unsigned int) * indices.size()),
                      &indices[0], GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
+
         //glBindVertexArray(VAO); // DOES IT WORK IF WE MOVE IT HERE? it renders nothing
+       
+        // Sets up vertex attribute pointers:
         // The information below is stored in the currently bound VAO!
         //               determine location=x in shader:   step size (8 floats) 
         //                    | vec dimension                  |        offset inside Vertex struct

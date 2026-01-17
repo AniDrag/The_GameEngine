@@ -1,6 +1,6 @@
 #version 400 core
 uniform vec3 lightPosition; // TODO: set this value
-out vec4 FragColor;
+out vec4 FragColor; 
 in vec3 fPos;
 in vec3 fNor;
 in vec2 uv;

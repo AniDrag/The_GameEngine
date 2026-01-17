@@ -3,9 +3,12 @@
 #include <cstdio>        // for printf
 #include <glm/gtc/matrix_transform.hpp> // for glm::lookAt
 #include <imgui.h>
+
 namespace core {
 
     Camera::Camera() {
+        view = glm::mat4(1);
+
         position = glm::vec3(0.0f, 0.0f, 10.0f);
         lookPivot = glm::vec3(0.0f, 0.0f, 0.0f);
         globalUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -14,103 +17,85 @@ namespace core {
         right = glm::normalize(glm::cross(globalUp, forward));
         up = glm::cross(forward, right);
 
+        mouseX = 0;
+        mouseY = 0;
         yaw = -90.0f;    // looking down -Z
         pitch = 0.0f;
         mouseSensitivity = 0.004f;
+        enableRotation = true;
 
-        view = glm::mat4(1);
+        // deltatimers;
+        finishFrameTime = 0;
+        deltaTime = 0;
+        currentTime = 0;
+
     }
 
     glm::mat4 Camera::GetViewMatrix() const {
         return view;
     }
-   //void Camera::CameraMovement(GLFWwindow* window) {
-   //    // Recalculate the direction vectors ONCE per frame
-   //    
-   //    forward = glm::normalize(lookPivot - position);
-   //    right = glm::normalize(glm::cross(forward, globalUp));
-   //    up = glm::normalize(glm::cross(right, forward));
+   // void Camera::CameraMovement(GLFWwindow* window) {
+   //     // Recalculate the direction vectors ONCE per frame
+   //
+   //     forward = glm::normalize(lookPivot - position);
+   //     right = glm::normalize(glm::cross(forward, globalUp));
+   //     up = glm::normalize(glm::cross(right, forward));
    //
    //
-   //    // W/S - forward/backward
-   //    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-   //        position += 0.01f * forward;
-   //        printf("Cam y:%f\n", position.z);
-   //    }
-   //    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-   //        position -= 0.01f * forward;
-   //        printf("Cam y:%f\n", position.z);
-   //    }
+   //     // W/S - forward/backward
+   //     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+   //         position += 0.01f * forward;
+   //         printf("Cam y:%f\n", position.z);
+   //     }
+   //     else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+   //         position -= 0.01f * forward;
+   //         printf("Cam y:%f\n", position.z);
+   //     }
    //
-   //    // A/D - strafe left/right
-   //    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-   //        position -= 0.01f * right;
-   //        printf("Cam y:%f\n", position.x);
-   //    }
-   //    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-   //        position += 0.01f * right;
-   //        printf("Cam y:%f\n", position.x);
-   //    }
+   //     // A/D - strafe left/right
+   //     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+   //         position -= 0.01f * right;
+   //         printf("Cam y:%f\n", position.x);
+   //     }
+   //     else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+   //         position += 0.01f * right;
+   //         printf("Cam y:%f\n", position.x);
+   //     }
    //
    //
-   //    // Q/E - up/down
-   //    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-   //        position += 0.01f * up;
-   //        printf("Cam y:%f\n", position.y);
-   //    }
-   //    else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-   //        position -= 0.01f * up;
-   //        printf("Cam y:%f\n", position.y);
-   //    }
+   //     // Q/E - up/down
+   //     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+   //         position += 0.01f * up;
+   //         printf("Cam y:%f\n", position.y);
+   //     }
+   //     else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+   //         position -= 0.01f * up;
+   //         printf("Cam y:%f\n", position.y);
+   //     }
    //
-   //    // Update lookPivot and view matrix
-   //    lookPivot = position + forward;
-   //    view = glm::lookAt(position, lookPivot, up);
-   //}
+   //     // Update lookPivot and view matrix
+   //     lookPivot = position + forward;
+   //     view = glm::lookAt(position, lookPivot, up);
+   // }
     void Camera::CameraMovement(GLFWwindow* window) {
-        
-        // Procesing all inputs 
-        Camera::ProcessInput(window);       
+        // Process inputs
+        ProcessInput(window);
 
-        // ---------- Direction from camera to pivot ----------
-        glm::vec3 dir = glm::normalize(lookPivot - position);
+        // Calculate forward direction from yaw and pitch
+        glm::vec3 dir;
+        dir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        dir.y = sin(glm::radians(pitch));
+        dir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-        // ---------- Build camera basis ----------
-        right = glm::normalize(glm::cross(dir, globalUp));
-        up = glm::normalize(glm::cross(right, dir));
+        // Recalculate basis vectors
+        forward = glm::normalize(dir);
+        right = glm::normalize(glm::cross(forward, globalUp));
+        up = glm::normalize(glm::cross(right, forward));
 
-        // ---------- YAW (world up) ----------
-        dir = glm::normalize(
-            glm::vec3(
-                glm::rotate(glm::mat4(1.0f), -yaw, globalUp)
-                * glm::vec4(dir, 0.0f)
-            )
-        );
-
-        // ---------- PITCH (camera right) ----------
-        glm::vec3 pitched =
-            glm::vec3(
-                glm::rotate(glm::mat4(1.0f), pitch, right)
-                * glm::vec4(dir, 0.0f)
-            );
-
-        // Prevent vertical flip
-        float verticalDot = glm::dot(glm::normalize(pitched), globalUp);
-        if (verticalDot < 0.99f && verticalDot > -0.99f)
-            dir = glm::normalize(pitched);
-
-        // ---------- Apply rotation ----------
-        if (enableRotation) {
-            forward = dir;
-            lookPivot = position + forward;
-        }
-
-
-        // ---------- Re-sync pivot after movement ----------
+        // Update lookPivot and view matrix
         lookPivot = position + forward;
-
-        // ---------- View matrix ----------
         view = glm::lookAt(position, lookPivot, up);
+
     }
     void Camera::ProcessInput(GLFWwindow* window) {
         // --------- time and deltaTime ---------
@@ -121,6 +106,7 @@ namespace core {
 
         const float speed = 5.0f * deltaTime;
 
+        
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             position += speed * forward;
 
@@ -146,20 +132,26 @@ namespace core {
             static bool firstMouse = true;
 
             glfwGetCursorPos(window, &mouseX, &mouseY);
+
             if (firstMouse) {
                 lastX = mouseX;
                 lastY = mouseY;
                 firstMouse = false;
             }
 
-            float dx = float(mouseX - lastX);
-            float dy = float(lastY - mouseY); // invert Y
+            float dx = static_cast<float>(mouseX - lastX);
+            float dy = static_cast<float>(lastY - mouseY); // inverted Y
 
             lastX = mouseX;
             lastY = mouseY;
 
-            yaw = dx * mouseSensitivity;
-            pitch = dy * mouseSensitivity;
+            // FIX: Use += to accumulate rotation, not = to set it
+            yaw += dx * mouseSensitivity;
+            pitch += dy * mouseSensitivity;
+
+            // Constrain pitch to prevent flip
+            if (pitch > 89.0f) pitch = 89.0f;
+            if (pitch < -89.0f) pitch = -89.0f;
         }
         // ---------- TAB key edge detection ----------
         static bool tabWasDown = false;
@@ -175,12 +167,8 @@ namespace core {
                 enableRotation ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL
             );
             ImGui::GetIO().MouseDrawCursor = !enableRotation;
-            
+
         }
         tabWasDown = tabIsDown;
     }
-
-    
-
 }
-

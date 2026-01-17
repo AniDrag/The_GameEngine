@@ -5,6 +5,8 @@
 #include <assimp/postprocess.h>
 
 namespace core {
+    //Job of loading the Mesh to a ?Scene
+
     Model AssimpLoader::loadModel(const std::string& path) {
         Assimp::Importer import;
         const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
@@ -46,7 +48,19 @@ namespace core {
                 uvs.x = 0.0f;
                 uvs.y = 0.0f;
             }
-            vertices.emplace_back(glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z), glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z), uvs);
+            vertices.emplace_back(
+                glm::vec3(
+                    mesh->mVertices[i].x, 
+                    mesh->mVertices[i].y, 
+                    mesh->mVertices[i].z
+                ), 
+                glm::vec3(
+                    mesh->mNormals[i].x, 
+                    mesh->mNormals[i].y, 
+                    mesh->mNormals[i].z
+                ), 
+                uvs
+            );
         }
         aiFace face;
         for (unsigned int i = 0; i < mesh->mNumFaces; i++) {

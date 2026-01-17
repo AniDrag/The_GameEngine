@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.fs" />
+    <None Include="shaders\LitShader.fs" />
     <None Include="shaders\modelVertex.vs" />
     <None Include="shaders\texture.fs" />
     <None Include="shaders\vertex.vs" />

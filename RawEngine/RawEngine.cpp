@@ -30,7 +30,7 @@
 int g_width = 800;
 int g_height = 600;
 GLenum drawMode = GL_TRIANGLES;
-glm::vec3 lightDir = glm::vec3(1, 0, 0);
+
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -167,6 +167,7 @@ int main() {
     const GLuint modelVertexShader = generateShader("shaders/modelVertex.vs", GL_VERTEX_SHADER);
     const GLuint fragmentShader = generateShader("shaders/fragment.fs", GL_FRAGMENT_SHADER);
     const GLuint textureShader = generateShader("shaders/texture.fs", GL_FRAGMENT_SHADER);
+    const GLuint litShader = generateShader("shaders/LitShader.fs", GL_FRAGMENT_SHADER);
 
     
     /// ------------------------------------------------
@@ -192,11 +193,21 @@ int main() {
         glGetProgramInfoLog(textureShaderProgram, 512, NULL, infoLog);
         printf("Error! Making Shader Program: %s\n", infoLog);
     }
+    const unsigned int litShaderProgram = glCreateProgram();
+    glAttachShader(litShaderProgram, modelVertexShader);
+    glAttachShader(litShaderProgram, litShader);
+    glLinkProgram(litShaderProgram);
+    glGetProgramiv(litShaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(litShaderProgram, 512, NULL, infoLog);
+        printf("Error! Making Shader Program: %s\n", infoLog);
+    }
 
     // Close calls
     glDeleteShader(modelVertexShader);
     glDeleteShader(fragmentShader);
     glDeleteShader(textureShader);
+    glDeleteShader(litShader);
 
     // Generate meshes
     core::Mesh quad = core::Mesh::generateQuad();
@@ -236,11 +247,15 @@ int main() {
 
     /// Uniforms
     GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram, "mvpMatrix");
+    GLint lightPosUniformModel = glGetUniformLocation(modelShaderProgram, "lightPosition");
     GLint textureModelUniform = glGetUniformLocation(textureShaderProgram, "mvpMatrix");
     GLint modelMatrix = glGetUniformLocation(textureShaderProgram, "modelMatrix");
     GLint textureUniform = glGetUniformLocation(textureShaderProgram, "text");
-    GLint lightPosUniform = glGetUniformLocation(modelShaderProgram, "lightPosition");
-   
+
+    GLint lightPosUniform = glGetUniformLocation(litShaderProgram, "lightPosition");
+    GLint lightColorUniform = glGetUniformLocation(litShaderProgram, "ambientLightColor");
+    GLint lightIntensityUniform = glGetUniformLocation(litShaderProgram, "ambientLightIntensity");
+    GLint cameraPositionUniformLitSHader = glGetUniformLocation(litShaderProgram, "cameraPosition");
     /// -----------------------------
     /// Loop Runtime
     /// -----------------------------
@@ -249,6 +264,15 @@ int main() {
     float deltaTime = 0.0f;
     float rotationStrength = 100.0f;
     std::string append = "Triangles";
+
+    /// -----------------------------
+    /// Light vars Runtime
+    /// -----------------------------
+    /// 
+    glm::vec3 lightDir = glm::vec3(1, 0, 0);
+    glm::vec3 lightColor = glm::vec3(1, 0, 0);
+    float lightIntensity = .1f;
+
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -268,7 +292,7 @@ int main() {
         }
         // Camera settings
         ImGui::Checkbox("Camera Rotation", &mainCamera.enableRotation);
-        ImGui::SliderFloat("Camera sensitivity", &mainCamera.mouseSensitivity, 0.0001f, 0.01f);
+        ImGui::SliderFloat("Camera sensitivity", &mainCamera.mouseSensitivity, 0.0001f, 0.2f);
 
 
         std::string wireName = "Draw Mode: " + append;
@@ -326,7 +350,9 @@ int main() {
         /// ImGui Window 3
         /// -----------------------------
         ImGui::Begin("Light Settings");        
-        ImGui::SliderFloat3("WorldLight", &lightDir.x, -10, 10);
+        ImGui::SliderFloat3("World Light Direction", &lightDir.x, -10, 10);
+        ImGui::SliderFloat3("World Light Intensity", &lightColor.x, 0.01f, 1.0f);
+        ImGui::SliderFloat("World Light Intensity", &lightIntensity, 0.01f, 1.0f);
 
         ImGui::End();
         /// -----------------------------
@@ -380,8 +406,11 @@ int main() {
         glBindVertexArray(0);
         //glActiveTexture(GL_TEXTURE0);
 
-        glUseProgram(modelShaderProgram);
+        glUseProgram(litShaderProgram);
         glUniform3fv(lightPosUniform, 1, glm::value_ptr(lightDir));
+        glUniform3fv(lightColorUniform, 1, glm::value_ptr(lightColor));
+        glUniform1f(lightIntensityUniform, lightIntensity);
+        glUniform3fv(cameraPositionUniformLitSHader, 1, glm::value_ptr(mainCamera.position));
         glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne.getModelMatrix()));
         glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(suzanne.getModelMatrix()));
         suzanne.render(drawMode);

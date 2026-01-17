@@ -9,6 +9,8 @@ namespace core {
     private:
         std::vector<core::Mesh> meshes;
         glm::mat4 modelMatrix;
+        // TODO: cache shader
+        // TODO: store object properties like object color & texture
     public:
         Model(std::vector<core::Mesh> meshes) : meshes(meshes), modelMatrix(1) {}
 
