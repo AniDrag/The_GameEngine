@@ -1,26 +1,35 @@
 #pragma once
 #include <glad/glad.h> // include glad to get all the required OpenGL headers
-
+#include <glm/glm.hpp>
+#include <unordered_map>
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-
+#include <vector>
 
 class Shader
 {
 public:
-    // the program ID
     unsigned int ID;
 
-    // constructor reads and builds the shader
     Shader(const char* vertexPath, const char* fragmentPath);
+    ~Shader();
 
-    // use/activate the shader
-    void use();
+    void use() const;
 
-    // utility uniform functions
-    void setBool(const std::string& name, bool value) const;
-    void setInt(const std::string& name, int value) const;
-    void setFloat(const std::string& name, float value) const;
+    void setProperty(const std::string& name, bool value) const;
+    void setProperty(const std::string& name, int value) const;
+    void setProperty(const std::string& name, float value) const;
+    void setProperty(const std::string& name, const glm::vec2& value) const;
+    void setProperty(const std::string& name, const glm::vec3& value) const;
+    void setProperty(const std::string& name, const glm::mat4& value) const;
+
+private:
+    mutable std::unordered_map<std::string, int> uniformCache;
+    int getUniformLocation(const std::string& name) const {
+        if (uniformCache.contains(name))
+            return uniformCache[name];
+
+        int location = glGetUniformLocation(ID, name.c_str());
+        uniformCache[name] = location;
+        return location;
+    };
 };

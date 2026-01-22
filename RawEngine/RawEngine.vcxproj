@@ -129,10 +129,12 @@
   <ItemGroup>
     <ClCompile Include="core\assimpLoader.cpp" />
     <ClCompile Include="core\Camera.cpp" />
+    <ClCompile Include="core\LitMaterial.cpp" />
     <ClCompile Include="core\mesh.cpp" />
     <ClCompile Include="core\model.cpp" />
     <ClCompile Include="core\texture.cpp" />
     <ClCompile Include="RawEngine.cpp" />
+    <ClCompile Include="shaders\shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\assimpLoader.h" />

@@ -5,6 +5,12 @@ uniform vec3 lightPosition;           // Light direction (normalized)
 uniform vec3 ambientLightColor;       // Ambient light color
 uniform float ambientLightIntensity;  // Ambient light strength
 
+uniform sample2D albedoTex;
+uniform sample2D normalTex;
+uniform sample2D roughnessTex;
+uniform sample2D metallicTex;
+
+
 out vec4 FragColor;
 in vec3 fPos;
 in vec3 fNor;
@@ -32,13 +38,13 @@ void main()
     vec3 diffuse = diffuseIntensity * albedo * ambientLightColor * attenuation;
 
     // Specular component
-    vec3 reflection = (normalizedLightDir - 2.0 * dot(normalizedNormal, normalizedLightDir) * normalizedNormal);
+    vec3 reflection = normalize(normalizedLightDir - 2.0 * dot(normalizedNormal, normalizedLightDir) * normalizedNormal);
     float specularIntensity = max(dot(reflection, normalizedCameraDir), 0.0f);
     
 
 
     // Combine lighting
-    vec3 finalColor = (ambient + diffuse) * specularIntensity;
+    vec3 finalColor = ambient + diffuse + specularIntensity;
     
     // Clamp and output
     FragColor = vec4(finalColor, 1.0);
