@@ -4,11 +4,15 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <sstream>
+#include <memory>
 #include <algorithm>
+#include <vector>
 #include "core/mesh.h"
 #include "core/assimpLoader.h"
 #include "core/texture.h"
 #include "core/Camera.h"
+#include "shaders/shader.h"
+#include "core/scene.h"
 
 //#define MAC_CLION
 #define VSTUDIO
@@ -162,8 +166,9 @@ int main() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-
-    // GLuint Shader adn othr component registration and initialization
+    /// ------------------------------------------------
+    ///     GLuint Shaders initialization
+    /// ------------------------------------------------
     const GLuint modelVertexShader = generateShader("shaders/modelVertex.vs", GL_VERTEX_SHADER);
     const GLuint fragmentShader = generateShader("shaders/fragment.fs", GL_FRAGMENT_SHADER);
     const GLuint textureShader = generateShader("shaders/texture.fs", GL_FRAGMENT_SHADER);
@@ -171,49 +176,27 @@ int main() {
 
     
     /// ------------------------------------------------
-    ///     Shader linking?
-    /// ------------------------------------------------
-    int success;
-    char infoLog[512];
-    const unsigned int modelShaderProgram = glCreateProgram();
-    glAttachShader(modelShaderProgram, modelVertexShader);
-    glAttachShader(modelShaderProgram, fragmentShader);
-    glLinkProgram(modelShaderProgram);
-    glGetProgramiv(modelShaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(modelShaderProgram, 512, NULL, infoLog);
-        printf("Error! Making Shader Program: %s\n", infoLog);
-    }
-    const unsigned int textureShaderProgram = glCreateProgram();
-    glAttachShader(textureShaderProgram, modelVertexShader);
-    glAttachShader(textureShaderProgram, textureShader);
-    glLinkProgram(textureShaderProgram);
-    glGetProgramiv(textureShaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(textureShaderProgram, 512, NULL, infoLog);
-        printf("Error! Making Shader Program: %s\n", infoLog);
-    }
-    const unsigned int litShaderProgram = glCreateProgram();
-    glAttachShader(litShaderProgram, modelVertexShader);
-    glAttachShader(litShaderProgram, litShader);
-    glLinkProgram(litShaderProgram);
-    glGetProgramiv(litShaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(litShaderProgram, 512, NULL, infoLog);
-        printf("Error! Making Shader Program: %s\n", infoLog);
-    }
-
+	///     Shader Programs initialization
+    /// ------------------------------------------------    
+	core::Shader modelShaderProgram(modelVertexShader, fragmentShader);
+    core::Shader textureShaderProgram(modelVertexShader, fragmentShader);
+    core::Shader litShaderProgram(modelVertexShader, fragmentShader);
+    
     // Close calls
     glDeleteShader(modelVertexShader);
     glDeleteShader(fragmentShader);
     glDeleteShader(textureShader);
     glDeleteShader(litShader);
 
-    // Generate meshes
+    /// ------------------------------------------------------------------------
+    // Generate Quad meshes for frame Buffers
+    /// ------------------------------------------------------------------------
     core::Mesh quad = core::Mesh::generateQuad();
     core::Model quadModel({ quad });
-    quadModel.translate(glm::vec3(0, 0, -2.5));
-    quadModel.scale(glm::vec3(5, 5, 1));
+	glm::vec3 quadTranslation = { 0, 0, -2.5 };
+    glm::vec3 quadScale = { 5, 5, 1 };
+    quadModel.translate(quadTranslation);
+    quadModel.scale(quadScale);
 
     /// ------------------------------------------------------------------------
     ///         Model and texture initialization and registration
@@ -229,9 +212,27 @@ int main() {
     /// -----------------------------
     /// Scenes
     /// -----------------------------
-   //Scene first;
-   //first.AddModel(&suzanne);
-   //first.AddTexture(&cmgtGatoTexture);
+    
+	std::vector<core::Scene*> scenes;
+    
+        /// -----------------------------
+        /// Scenes 1
+        /// -----------------------------
+        core::Scene SceneOne;
+
+        SceneOne.addModel(std::make_shared<core::Model>(suzanne));
+
+	    scenes.push_back(&SceneOne);
+
+        /// -----------------------------
+        /// Scenes 2
+        /// -----------------------------
+        core::Scene SceneTwo;
+
+        SceneTwo.addModel(std::make_shared<core::Model>(suzanne));
+
+        scenes.push_back(&SceneTwo);
+    
 
     /// -----------------------------
     /// Camera(s) Data
@@ -246,16 +247,16 @@ int main() {
 
 
     /// Uniforms
-    GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram, "mvpMatrix");
-    GLint lightPosUniformModel = glGetUniformLocation(modelShaderProgram, "lightPosition");
-    GLint textureModelUniform = glGetUniformLocation(textureShaderProgram, "mvpMatrix");
-    GLint modelMatrix = glGetUniformLocation(textureShaderProgram, "modelMatrix");
-    GLint textureUniform = glGetUniformLocation(textureShaderProgram, "text");
+    GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram.ID, "mvpMatrix");
+    GLint lightPosUniformModel = glGetUniformLocation(modelShaderProgram.ID, "lightPosition");
+    GLint textureModelUniform = glGetUniformLocation(textureShaderProgram.ID, "mvpMatrix");
+    GLint modelMatrix = glGetUniformLocation(textureShaderProgram.ID, "modelMatrix");
+    GLint textureUniform = glGetUniformLocation(textureShaderProgram.ID, "text");
 
-    GLint lightPosUniform = glGetUniformLocation(litShaderProgram, "lightPosition");
-    GLint lightColorUniform = glGetUniformLocation(litShaderProgram, "ambientLightColor");
-    GLint lightIntensityUniform = glGetUniformLocation(litShaderProgram, "ambientLightIntensity");
-    GLint cameraPositionUniformLitSHader = glGetUniformLocation(litShaderProgram, "cameraPosition");
+    GLint lightPosUniform = glGetUniformLocation(litShaderProgram.ID, "lightPosition");
+    GLint lightColorUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightColor");
+    GLint lightIntensityUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightIntensity");
+    GLint cameraPositionUniformLitSHader = glGetUniformLocation(litShaderProgram.ID, "cameraPosition");
     /// -----------------------------
     /// Loop Runtime
     /// -----------------------------
@@ -272,96 +273,103 @@ int main() {
     glm::vec3 lightDir = glm::vec3(1, 0, 0);
     glm::vec3 lightColor = glm::vec3(1, 0, 0);
     float lightIntensity = .1f;
+    glm::vec3 lightbulbSuzana{ 1.0f, 2.0f, 5.0f };
+    lightBulbSuzane.position(lightbulbSuzana);
 
+    glm::vec3 suzzaneRotate{ 0.0f, 1.0f, 0.0f };
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        lightBulbSuzane.position(glm::vec3(1.0f, 2.0f, 5.0f));
-        /// -----------------------------
-        /// Draw ImGui elements Window 1
-        /// -----------------------------
+        // -----------------------------
+// ImGui Frame Start
+// -----------------------------
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // -----------------------------
+        // Main Window
+        // -----------------------------
         ImGui::Begin("Raw Engine v2", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        // FPS Display
+        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.3f, 1.0f), "FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Separator();
 
-        if (ImGui::Button("Print test")) {
-            printf("Button pressed\n");
-        }
-        // Camera settings
-        ImGui::Checkbox("Camera Rotation", &mainCamera.enableRotation);
-        ImGui::SliderFloat("Camera sensitivity", &mainCamera.mouseSensitivity, 0.0001f, 0.2f);
+        // ---------- Camera Settings ----------
+        if (ImGui::CollapsingHeader("Camera Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Checkbox("Enable Rotation", &mainCamera.enableRotation);
+            ImGui::SliderFloat("Mouse Sensitivity", &mainCamera.mouseSensitivity, 0.001f, 0.2f, "%.4f");
 
-
-        std::string wireName = "Draw Mode: " + append;
-        if (ImGui::Button(wireName.c_str())) {
-            if (drawMode == GL_TRIANGLES) {
-                drawMode = GL_LINES;
-                append = "Wire Frame";
-            }
-            else if (drawMode == GL_LINES) {
-                drawMode = GL_POINTS;
-                append = "Points";
-            }
-            else if (drawMode == GL_POINTS) {
-                drawMode = GL_LINE_STRIP;
-                append = "Line strips";
-            }
-            else if (drawMode == GL_LINE_STRIP) {
-                drawMode = GL_LINE_LOOP;
-                append = "Line loops";
-            }
-            else if (drawMode == GL_LINE_LOOP) {
-                drawMode = GL_TRIANGLE_STRIP;
-                append = "Triangel strip";
-            }
-            else if (drawMode == GL_TRIANGLE_STRIP) {
-                drawMode = GL_TRIANGLE_FAN;
-                append = "Triangel fan";
-            }
-            else {
-                drawMode = GL_TRIANGLES; 
-                append = "Triangles";
-            }
-            printf(" Wireframe button pressed: %s\n", append.c_str());
+            ImGui::Text("Position: X: %.2f Y: %.2f Z: %.2f", mainCamera.position.x, mainCamera.position.y, mainCamera.position.z);
         }
 
-        //Quit Application
-        if (ImGui::Button("Quit Application")) {
-            glfwSetWindowShouldClose(window, true);  
+        // ---------- Draw Mode ----------
+        if (ImGui::CollapsingHeader("Draw Mode", ImGuiTreeNodeFlags_DefaultOpen)) {
+            const char* drawModes[] = {
+                "Triangles", "Wireframe", "Points", "Line Strip", "Line Loop", "Triangle Strip", "Triangle Fan"
+            };
+            static int currentDrawMode = 0;
+
+            if (ImGui::Combo("Mode", &currentDrawMode, drawModes, IM_ARRAYSIZE(drawModes))) {
+                switch (currentDrawMode) {
+                case 0: drawMode = GL_TRIANGLES; append = "Triangles"; break;
+                case 1: drawMode = GL_LINES; append = "Wire Frame"; break;
+                case 2: drawMode = GL_POINTS; append = "Points"; break;
+                case 3: drawMode = GL_LINE_STRIP; append = "Line strips"; break;
+                case 4: drawMode = GL_LINE_LOOP; append = "Line loops"; break;
+                case 5: drawMode = GL_TRIANGLE_STRIP; append = "Triangle strip"; break;
+                case 6: drawMode = GL_TRIANGLE_FAN; append = "Triangle fan"; break;
+                }
+            }
+        }
+
+        // ---------- Application Controls ----------
+        ImGui::Separator();
+        if (ImGui::Button("Quit Application", ImVec2(-1, 0))) {
+            glfwSetWindowShouldClose(window, true);
         }
 
         ImGui::End();
 
-        /// -----------------------------
-        /// ImGui Window 2
-        /// -----------------------------
+        // -----------------------------
+        // Game Objects Window
+        // -----------------------------
         ImGui::Begin("Game Objects", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::Text("Scene Overview");
-        ImGui::Separator();
-        ImGui::Text("Camera Position: X: %.2f, Y: %.2f, Z: %.2f", mainCamera.position.x, mainCamera.position.y, mainCamera.position.z);
-        ImGui::Text("Draw Mode: %s", drawMode == GL_TRIANGLES ? "TRIANGLES" : "LINES");
+        if (ImGui::CollapsingHeader("Scene Overview", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("Camera Position:");
+            ImGui::Indent();
+            ImGui::Text("X: %.2f", mainCamera.position.x);
+            ImGui::Text("Y: %.2f", mainCamera.position.y);
+            ImGui::Text("Z: %.2f", mainCamera.position.z);
+            ImGui::Unindent();
+
+            ImGui::Text("Current Draw Mode: %s", append.c_str());
+        }
 
         ImGui::End();
-        /// -----------------------------
-        /// ImGui Window 3
-        /// -----------------------------
-        ImGui::Begin("Light Settings");        
-        ImGui::SliderFloat3("World Light Direction", &lightDir.x, -10, 10);
-        ImGui::SliderFloat3("World Light Intensity", &lightColor.x, 0.01f, 1.0f);
-        ImGui::SliderFloat("World Light Intensity", &lightIntensity, 0.01f, 1.0f);
+
+        // -----------------------------
+        // Light Settings Window
+        // -----------------------------
+        ImGui::Begin("Light Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+        if (ImGui::CollapsingHeader("Directional Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::SliderFloat3("Direction", &lightDir.x, -10.0f, 10.0f, "%.2f");
+            ImGui::ColorEdit3("Color", &lightColor.x);
+            ImGui::SliderFloat("Intensity", &lightIntensity, 0.01f, 1.0f, "%.2f");
+        }
 
         ImGui::End();
+
         /// -----------------------------
         /// Other procesess
         /// -----------------------------
 
         processInput(window);
         
-        suzanne.rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(rotationStrength) * static_cast<float>(deltaTime));
+        suzanne.rotate(suzzaneRotate, glm::radians(rotationStrength) * static_cast<float>(deltaTime));
         
         mainCamera.CameraMovement(window);
         view = mainCamera.GetViewMatrix();
@@ -392,7 +400,7 @@ int main() {
         //glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
         // and then we call:
         // model.render(drawMode);
-        glUseProgram(textureShaderProgram); // This is a task for the material
+        glUseProgram(textureShaderProgram.ID); // This is a task for the material
         // This line does the whole space transformation from object  > world > camera > screen (more or less)
         glUniformMatrix4fv(textureModelUniform, 1, GL_FALSE, glm::value_ptr(projection * view * quadModel.getModelMatrix()));
         
@@ -406,7 +414,7 @@ int main() {
         glBindVertexArray(0);
         //glActiveTexture(GL_TEXTURE0);
 
-        glUseProgram(litShaderProgram);
+        glUseProgram(litShaderProgram.ID);
         glUniform3fv(lightPosUniform, 1, glm::value_ptr(lightDir));
         glUniform3fv(lightColorUniform, 1, glm::value_ptr(lightColor));
         glUniform1f(lightIntensityUniform, lightIntensity);
@@ -429,7 +437,7 @@ int main() {
         currentTime = finishFrameTime;
     }
 
-    glDeleteProgram(modelShaderProgram);
+    glDeleteProgram(modelShaderProgram.ID);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

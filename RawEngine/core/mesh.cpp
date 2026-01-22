@@ -79,7 +79,7 @@ namespace core {
         return Mesh(vertexVector, indices);
     }
 
-    void Mesh::render(GLenum drawMode) {
+    void Mesh::render(GLenum& drawMode) {
         glBindVertexArray(VAO);
         glDrawElements(drawMode, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
     }

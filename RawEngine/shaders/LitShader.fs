@@ -5,10 +5,11 @@ uniform vec3 lightPosition;           // Light direction (normalized)
 uniform vec3 ambientLightColor;       // Ambient light color
 uniform float ambientLightIntensity;  // Ambient light strength
 
+uniform vec3 baseColor;
+uiniform float metallic;
+uniform float roughness;
 uniform sample2D albedoTex;
 uniform sample2D normalTex;
-uniform sample2D roughnessTex;
-uniform sample2D metallicTex;
 
 
 out vec4 FragColor;

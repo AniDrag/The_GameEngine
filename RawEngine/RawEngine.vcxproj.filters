@@ -45,10 +45,13 @@
     <ClCompile Include="core\Camera.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="core\LitMaterial.cpp">
+    <ClCompile Include="core\material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="shaders\shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,6 +78,9 @@
       <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="shaders\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

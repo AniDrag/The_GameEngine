@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -129,9 +129,10 @@
   <ItemGroup>
     <ClCompile Include="core\assimpLoader.cpp" />
     <ClCompile Include="core\Camera.cpp" />
-    <ClCompile Include="core\LitMaterial.cpp" />
+    <ClCompile Include="core\material.cpp" />
     <ClCompile Include="core\mesh.cpp" />
     <ClCompile Include="core\model.cpp" />
+    <ClCompile Include="core\scene.cpp" />
     <ClCompile Include="core\texture.cpp" />
     <ClCompile Include="RawEngine.cpp" />
     <ClCompile Include="shaders\shader.cpp" />
@@ -142,6 +143,7 @@
     <ClInclude Include="core\GameObject.h" />
     <ClInclude Include="core\mesh.h" />
     <ClInclude Include="core\model.h" />
+    <ClInclude Include="core\scene.h" />
     <ClInclude Include="core\texture.h" />
     <ClInclude Include="core\vertex.h" />
     <ClInclude Include="shaders\shader.h" />
