@@ -203,7 +203,7 @@ int main() {
     /// ------------------------------------------------------------------------
     core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     core::Model lightBulbSuzane = core::AssimpLoader::loadModel("models/sz.obj");
-    core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");
+    core::Texture cmgtGatoTexture("textures/dragonTexture.png");// CMGaTo_crop.png
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
@@ -405,9 +405,8 @@ int main() {
         glUniformMatrix4fv(textureModelUniform, 1, GL_FALSE, glm::value_ptr(projection * view * quadModel.getModelMatrix()));
         
         // This is also task of material:
-        glActiveTexture(GL_TEXTURE0);
-        glUniform1i(textureUniform, 0);
-        
+        glActiveTexture(GL_TEXTURE3);
+        glUniform1i(textureUniform, 3);        
         glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
         
         quadModel.render(drawMode);

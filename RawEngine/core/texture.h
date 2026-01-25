@@ -10,7 +10,7 @@ namespace core {
         GLuint id;
 
     public:
-        Texture(const std::string& path);
+        Texture(const std::string& path);// binds it in memory and all we need is the id to access it
 
         GLuint getId();
     };

@@ -7,17 +7,21 @@
 namespace core {
 	class Material {
     public:
-		Material() = default;
-        Material(Texture albedo, Texture normal, float roughness, float metallic);
-		Material(glm::vec3 albedoColor, float roughness, float metallic);
+		Material(void) = default;
+        Material(std::string pAlbedo, std::string pNormal, float pRoughness, float pMetallic) ;
+
+        Material(glm::vec3 pAlbedoColor, float pRoughness, float pMetallic);
 
         glm::vec3 albedoColor{ 1.0f };
         float roughness = 1.0f;
         float metallic = 0.0f;
 
-        std::shared_ptr<Texture> albedo;
-        std::shared_ptr<Texture> normal;
+        GLuint albedo;
+        GLuint normal;
 
         void bind(const Shader& shader) const;
+
+        void addNormalTexture(std::string pNormalPath);
+		void addAlbedoTexture(std::string pAlbedoPath);
     };
 }

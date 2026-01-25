@@ -26,5 +26,5 @@ namespace core {
             return material;
         }
         void attachShader(const std::shared_ptr<Shader>& shader) const;
-    }
-}
+    };
+};

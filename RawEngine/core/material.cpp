@@ -1,17 +1,23 @@
 #include"material.h"
-
+#include"texture.h"
 namespace core{
 
-	Material::Material(std::string albedoTexPath, std::string normalTexPath, float roughness, float metallic){
-		this->albedo(&albedoTexPath);
-		this->normal(&normalTexPath);
-		this->roughness = roughness;
-		this->metallic = metallic;
+	
+	Material::Material(std::string pAlbedo, std::string pNormal, float pRoughness, float pMetallic){
+		Texture albedoTex(pAlbedo);
+		Texture normalTex(pNormal);
+		albedo = albedoTex.getId();
+		normal = normalTex.getId();
+		roughness = pRoughness;
+		metallic = pMetallic;
+		albedoColor = glm::vec3(1.0f);
 	}
-	Material::Material(glm::vec3 albedoColor, float roughness, float metallic){
-		this->albedoColor = albedoColor;
-		this->roughness = roughness;
-		this->metallic = metallic;
+	Material::Material(glm::vec3 pAlbedoColor, float pRoughness, float pMetallic){
+		albedoColor = pAlbedoColor;
+		roughness = pRoughness;
+		metallic = pMetallic;
+		albedo = -1;
+		normal = -1;
 	}
 
 	void Material::bind(const Shader& shader) const {
@@ -19,12 +25,32 @@ namespace core{
 			shader.setProperty("roughness", roughness);
 			shader.setProperty("metallic", metallic);
 
-			albedo.bind(0);
+			//open GL bind textures?
+			glActiveTexture(GL_TEXTURE0);
 			shader.setProperty("albedoTex", 0);
+			glBindTexture(GL_TEXTURE_2D, albedo);
 
-			normal.bind(1);
+			glActiveTexture(GL_TEXTURE1);
 			shader.setProperty("normalTex", 1);
+			glBindTexture(GL_TEXTURE_2D, normal);
 		
+	}
+
+	void Material::addNormalTexture(std::string pNormalPath) {
+		if (normal >= 0) {
+			// remove current normal texture
+			glDeleteTextures(1, &normal);
+		}
+		Texture normalTex(pNormalPath);
+		normal = normalTex.getId();
+	}
+	void Material::addAlbedoTexture(std::string pAlbedoPath) {
+		if (albedo >= 0) {
+			// remove current albedo texture
+			glDeleteTextures(1, &albedo);
+		}
+		Texture albedoTex(pAlbedoPath);
+		albedo = albedoTex.getId();
 	}
 
 }

@@ -9,12 +9,12 @@ namespace core {
     class Scene
     {
     public:
-		Scene() = default;
-        void addModel(const std::shared_ptr<Model> model);
+		//Scene() = default;
+        void addModel(std::shared_ptr<Model> model);
         void render();
 
     private:
-        std::vector<const std::shared_ptr<Model>> models;
+        std::vector<std::shared_ptr<Model>> models;
 
         unsigned int sceneFBO = 0;
         unsigned int sceneColorTex = 0;

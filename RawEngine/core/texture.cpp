@@ -37,4 +37,6 @@ namespace core {
     GLuint Texture::getId() {
         return id;
     }
+
+   
 }

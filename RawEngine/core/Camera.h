@@ -23,9 +23,9 @@ namespace core {
 		bool enableRotation = true;
 
 		//deltatimers;
-		float finishFrameTime;
-		float	deltaTime;
-		float	currentTime;
+		double finishFrameTime;
+		double	deltaTime;
+		double	currentTime;
 
 
 
