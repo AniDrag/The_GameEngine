@@ -12,6 +12,7 @@ namespace core {
 		//Scene() = default;
         void addModel(std::shared_ptr<Model> model);
         void render();
+		GLuint drawMode = GL_TRIANGLES;
 
     private:
         std::vector<std::shared_ptr<Model>> models;

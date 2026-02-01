@@ -9,7 +9,7 @@ namespace core
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         for (const auto& model : models)
-            model->render(GL_TRIANGLES);
+            model->render(drawMode);
 
         // 2. post-process
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

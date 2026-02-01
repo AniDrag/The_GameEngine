@@ -6,10 +6,10 @@ uniform vec3 ambientLightColor;       // Ambient light color
 uniform float ambientLightIntensity;  // Ambient light strength
 
 uniform vec3 baseColor;
-uiniform float metallic;
+uinform float metallic;
 uniform float roughness;
-uniform sample2D albedoTex;
-uniform sample2D normalTex;
+uniform sampler2D albedoTex;
+uniform sampler2D normalTex;
 
 
 out vec4 FragColor;

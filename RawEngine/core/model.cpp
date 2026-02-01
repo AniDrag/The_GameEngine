@@ -1,18 +1,24 @@
-#include "model.h"
+﻿#include "model.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include "material.h"
 namespace core {
     void Model::render(GLenum drawMode) const{
 
-       //if (!shader) return;
-       //shader->use();
-       //shader->setProperty("modelMatrix", modelMatrix);
-       //material.bind(*shader);
+        //if (!shader || !material ) return;
 
-        for (auto& mesh : meshes)
+        // 1️ Use shader
+        shader->use();
+
+        // 2️ Per-model uniform
+        shader->setProperty("modelMatrix", modelMatrix);
+
+        // 3️ Bind material (textures + material uniforms)
+        material.bind(*shader);
+
+        // 4️ Draw meshes
+        for (const auto& mesh : meshes)
+        {
             mesh.render(drawMode);
-        for (int i = 0; i < meshes.size(); ++i) {
-            meshes[i].render(drawMode); // meshes is a type modifier not compatible with the member function core::Mesh::Render
         }
     }
     // use Identity matrix and multiply it by translated pos. so even in update it will stay at X position

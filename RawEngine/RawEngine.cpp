@@ -189,7 +189,7 @@ int main() {
     glDeleteShader(litShader);
 
     /// ------------------------------------------------------------------------
-    // Generate Quad meshes for frame Buffers
+    // Generate Quad meshes for image
     /// ------------------------------------------------------------------------
     core::Mesh quad = core::Mesh::generateQuad();
     core::Model quadModel({ quad });
@@ -278,9 +278,13 @@ int main() {
 
     glm::vec3 suzzaneRotate{ 0.0f, 1.0f, 0.0f };
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);// Clearing depth buffer and color buffer aka reseting values to draw new frame
 
-        // -----------------------------
+#pragma region ImGui region
+
+
+
+// -----------------------------
 // ImGui Frame Start
 // -----------------------------
         ImGui_ImplOpenGL3_NewFrame();
@@ -362,6 +366,7 @@ int main() {
         }
 
         ImGui::End();
+#pragma endregion
 
         /// -----------------------------
         /// Other procesess
