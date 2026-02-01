@@ -21,18 +21,21 @@ namespace core{
 	}
 
 	void Material::bind(const Shader& shader) const {
-			shader.setProperty("baseColor", albedoColor);
-			shader.setProperty("roughness", roughness);
-			shader.setProperty("metallic", metallic);
+		shader.setProperty("baseColor", albedoColor);
+		shader.setProperty("roughness", roughness);
+		shader.setProperty("metallic", metallic);
 
-			//open GL bind textures?
+		//open GL bind textures?
+		if (albedo >= 0) {
 			glActiveTexture(GL_TEXTURE0);
 			shader.setProperty("albedoTex", 0);
 			glBindTexture(GL_TEXTURE_2D, albedo);
-
+		}
+		if (normal >= 0) {
 			glActiveTexture(GL_TEXTURE1);
 			shader.setProperty("normalTex", 1);
 			glBindTexture(GL_TEXTURE_2D, normal);
+		}
 		
 	}
 

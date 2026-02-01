@@ -22,6 +22,8 @@ namespace core {
 		float mouseSensitivity;
 		bool enableRotation = true;
 
+		float fov = 45.0f;
+
 		//deltatimers;
 		double finishFrameTime;
 		double	deltaTime;
@@ -32,6 +34,7 @@ namespace core {
 		//Initialization
 		Camera();
 		glm::mat4 GetViewMatrix() const;
+		glm::mat4 GetProjectionMatrix(float aspectRatio, float nearPlane, float farPlane) const;
 		void CameraMovement(GLFWwindow* window);
 		void ProcessInput(GLFWwindow* window);
 	};

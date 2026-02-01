@@ -189,9 +189,10 @@ int main() {
     glDeleteShader(litShader);
 
     /// ------------------------------------------------------------------------
-    // Generate Quad meshes for image
+    // Generate Quad meshes for image gato
     /// ------------------------------------------------------------------------
     core::Mesh quad = core::Mesh::generateQuad();
+    core::Mesh screenQuadModel = core::Mesh::generateQuad();
     core::Model quadModel({ quad });
 	glm::vec3 quadTranslation = { 0, 0, -2.5 };
     glm::vec3 quadScale = { 5, 5, 1 };
@@ -204,6 +205,13 @@ int main() {
     core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     core::Model lightBulbSuzane = core::AssimpLoader::loadModel("models/sz.obj");
     core::Texture cmgtGatoTexture("textures/dragonTexture.png");// CMGaTo_crop.png
+    suzanne.material.addAlbedoTexture("textures/dragonTexture.png");
+	auto litShaderProgramPtr = std::make_shared<core::Shader>(litShaderProgram);
+    suzanne.attachShader(litShaderProgramPtr);
+
+
+   
+
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
@@ -214,49 +222,68 @@ int main() {
     /// -----------------------------
     
 	std::vector<core::Scene*> scenes;
+    static int activeSceneIndex = 0;
+    core::Scene* activeScene = nullptr;
+
+    
+
     
         /// -----------------------------
         /// Scenes 1
         /// -----------------------------
-        core::Scene SceneOne;
+        core::Scene SceneOne(window);
 
-        SceneOne.addModel(std::make_shared<core::Model>(suzanne));
+        // Assign shader to models before adding to scene
+        auto suzanneModel1 = std::make_shared<core::Model>(suzanne);
+        SceneOne.addModel(suzanneModel1);
+
 
 	    scenes.push_back(&SceneOne);
 
         /// -----------------------------
         /// Scenes 2
         /// -----------------------------
-        core::Scene SceneTwo;
+        core::Scene SceneTwo(window);
 
-        SceneTwo.addModel(std::make_shared<core::Model>(suzanne));
+
+        auto suzanneModel2 = std::make_shared<core::Model>(suzanne);
+        SceneTwo.addModel(suzanneModel2);
+        SceneTwo.addModel(suzanneModel1);
+        glm::vec3 positionSuzi = glm::vec3(-2.0f, 0.0f, 0.0f);
+		suzanneModel1->position(positionSuzi);
 
         scenes.push_back(&SceneTwo);
+
+        if (!scenes.empty()) {
+            // clamp index to prevent out-of-range access
+            if (activeSceneIndex >= scenes.size()) activeSceneIndex = int(scenes.size() - 1);
+            activeScene = scenes[activeSceneIndex];
+        }
     
 
     /// -----------------------------
     /// Camera(s) Data
     /// -----------------------------
-    core::Camera mainCamera;
+  //  core::Camera mainCamera;
 
     /// -----------------------------
     /// View  &  Projection
     /// -----------------------------
-    glm::mat4 view = mainCamera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
+   // glm::mat4 view = mainCamera.GetViewMatrix();
+   // glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
 
 
     /// Uniforms
-    GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram.ID, "mvpMatrix");
-    GLint lightPosUniformModel = glGetUniformLocation(modelShaderProgram.ID, "lightPosition");
-    GLint textureModelUniform = glGetUniformLocation(textureShaderProgram.ID, "mvpMatrix");
-    GLint modelMatrix = glGetUniformLocation(textureShaderProgram.ID, "modelMatrix");
-    GLint textureUniform = glGetUniformLocation(textureShaderProgram.ID, "text");
-
-    GLint lightPosUniform = glGetUniformLocation(litShaderProgram.ID, "lightPosition");
-    GLint lightColorUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightColor");
-    GLint lightIntensityUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightIntensity");
-    GLint cameraPositionUniformLitSHader = glGetUniformLocation(litShaderProgram.ID, "cameraPosition");
+  //  GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram.ID, "mvpMatrix");
+  //  GLint lightPosUniformModel = glGetUniformLocation(modelShaderProgram.ID, "lightPosition");
+  //  GLint textureModelUniform = glGetUniformLocation(textureShaderProgram.ID, "mvpMatrix");
+  //  GLint modelMatrix = glGetUniformLocation(textureShaderProgram.ID, "modelMatrix");
+  //  GLint textureUniform = glGetUniformLocation(textureShaderProgram.ID, "text");
+  //
+  //  GLint lightPosUniform = glGetUniformLocation(litShaderProgram.ID, "lightPosition");
+  //  GLint lightColorUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightColor");
+  //  GLint lightIntensityUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightIntensity");
+  //  GLint cameraPositionUniformLitSHader = glGetUniformLocation(litShaderProgram.ID, "cameraPosition");
     /// -----------------------------
     /// Loop Runtime
     /// -----------------------------
@@ -270,15 +297,55 @@ int main() {
     /// Light vars Runtime
     /// -----------------------------
     /// 
-    glm::vec3 lightDir = glm::vec3(1, 0, 0);
-    glm::vec3 lightColor = glm::vec3(1, 0, 0);
-    float lightIntensity = .1f;
-    glm::vec3 lightbulbSuzana{ 1.0f, 2.0f, 5.0f };
+ //  glm::vec3 lightDir = glm::vec3(1, 0, 0);
+ //  glm::vec3 lightColor = glm::vec3(1, 0, 0);
+ //  float lightIntensity = .1f;
+   glm::vec3 lightbulbSuzana{ 1.0f, 2.0f, 5.0f };
     lightBulbSuzane.position(lightbulbSuzana);
 
     glm::vec3 suzzaneRotate{ 0.0f, 1.0f, 0.0f };
+
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    GLuint sceneFBO = 0;
+    glGenFramebuffers(1, &sceneFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+
+    // color texture that will contain the rendered scene
+    GLuint colorBuffer;
+    glGenTextures(1, &colorBuffer);
+    glBindTexture(GL_TEXTURE_2D, colorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_width, g_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
+
+    // depth+stencil renderbuffer for the scene FBO
+    GLuint sceneRBO = 0;
+    glGenRenderbuffers(1, &sceneRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, sceneRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, sceneRBO);
+
+    // draw buffers and completeness
+    GLenum drawBuf = GL_COLOR_ATTACHMENT0;
+    glDrawBuffers(1, &drawBuf);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        printf("ERROR::SCENE_FRAMEBUFFER:: Framebuffer is not complete!\n");
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     while (!glfwWindowShouldClose(window)) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);// Clearing depth buffer and color buffer aka reseting values to draw new frame
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);// Clearing depth buffer and color buffer aka reseting values to draw new frame
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+        glViewport(0, 0, g_width, g_height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #pragma region ImGui region
 
@@ -291,44 +358,110 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // -----------------------------
-        // Main Window
-        // -----------------------------
-        ImGui::Begin("Raw Engine v2", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("Scene Inspector", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-        // FPS Display
-        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.3f, 1.0f), "FPS: %.1f", ImGui::GetIO().Framerate);
+        // ------------------------------------------------
+        // FPS
+        // ------------------------------------------------
+        ImGui::TextColored(
+            ImVec4(0.2f, 1.0f, 0.3f, 1.0f),
+            "FPS: %.1f",
+            ImGui::GetIO().Framerate
+        );
         ImGui::Separator();
 
-        // ---------- Camera Settings ----------
-        if (ImGui::CollapsingHeader("Camera Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::Checkbox("Enable Rotation", &mainCamera.enableRotation);
-            ImGui::SliderFloat("Mouse Sensitivity", &mainCamera.mouseSensitivity, 0.001f, 0.2f, "%.4f");
+        // ------------------------------------------------
+        // Scene Selection
+        // ------------------------------------------------
+        if (ImGui::CollapsingHeader("Scene", ImGuiTreeNodeFlags_DefaultOpen)) {
+            const char* sceneNames[] = { "Scene One", "Scene Two" };
+            if (activeScene) {
 
-            ImGui::Text("Position: X: %.2f Y: %.2f Z: %.2f", mainCamera.position.x, mainCamera.position.y, mainCamera.position.z);
+                if (ImGui::Combo("Active Scene", &activeSceneIndex, sceneNames, IM_ARRAYSIZE(sceneNames))) {
+                    activeScene = scenes[activeSceneIndex];
+                }
+
+                ImGui::Text(
+                    "Resolution: %.0f x %.0f",
+                    activeScene->screenSize.x,
+                    activeScene->screenSize.y
+                );
+            }
         }
 
-        // ---------- Draw Mode ----------
-        if (ImGui::CollapsingHeader("Draw Mode", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // ------------------------------------------------
+        // Camera
+        // ------------------------------------------------
+        if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (activeScene) {
+                auto& cam = activeScene->sceneCamera;
+
+                ImGui::Checkbox("Enable Rotation", &cam.enableRotation);
+                ImGui::SliderFloat("Mouse Sensitivity", &cam.mouseSensitivity, 0.001f, 0.2f, "%.4f");
+
+                ImGui::Separator();
+                ImGui::Text("Position");
+                ImGui::DragFloat3("##CamPos", &cam.position.x, 0.05f);
+            }
+        }
+
+        // ------------------------------------------------
+        // Lighting
+        // ------------------------------------------------
+        if (ImGui::CollapsingHeader("Lighting", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+            ImGui::Text("Directional Light");
+            if (activeScene) {
+
+                ImGui::DragFloat3(
+                    "Direction",
+                    &activeScene->lightDirection.x,
+                    0.05f, -10.0f, 10.0f
+                );
+
+                ImGui::ColorEdit3(
+                    "Color",
+                    &activeScene->lightColor.x
+                );
+
+                ImGui::SliderFloat(
+                    "Intensity",
+                    &activeScene->lightIntensity,
+                    0.01f, 1.0f
+                );
+            }
+        }
+
+        // ------------------------------------------------
+        // Render Settings
+        // ------------------------------------------------
+        if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
             const char* drawModes[] = {
-                "Triangles", "Wireframe", "Points", "Line Strip", "Line Loop", "Triangle Strip", "Triangle Fan"
+                "Triangles", "Wireframe", "Points",
+                "Line Strip", "Line Loop",
+                "Triangle Strip", "Triangle Fan"
             };
+
             static int currentDrawMode = 0;
 
-            if (ImGui::Combo("Mode", &currentDrawMode, drawModes, IM_ARRAYSIZE(drawModes))) {
-                switch (currentDrawMode) {
-                case 0: drawMode = GL_TRIANGLES; append = "Triangles"; break;
-                case 1: drawMode = GL_LINES; append = "Wire Frame"; break;
-                case 2: drawMode = GL_POINTS; append = "Points"; break;
-                case 3: drawMode = GL_LINE_STRIP; append = "Line strips"; break;
-                case 4: drawMode = GL_LINE_LOOP; append = "Line loops"; break;
-                case 5: drawMode = GL_TRIANGLE_STRIP; append = "Triangle strip"; break;
-                case 6: drawMode = GL_TRIANGLE_FAN; append = "Triangle fan"; break;
+            if (activeScene) {
+                if (ImGui::Combo("Draw Mode", &currentDrawMode, drawModes, IM_ARRAYSIZE(drawModes))) {
+                    switch (currentDrawMode) {
+                    case 0: activeScene->drawMode = GL_TRIANGLES; break;
+                    case 1: activeScene->drawMode = GL_LINES; break;
+                    case 2: activeScene->drawMode = GL_POINTS; break;
+                    case 3: activeScene->drawMode = GL_LINE_STRIP; break;
+                    case 4: activeScene->drawMode = GL_LINE_LOOP; break;
+                    case 5: activeScene->drawMode = GL_TRIANGLE_STRIP; break;
+                    case 6: activeScene->drawMode = GL_TRIANGLE_FAN; break;
+                    }
                 }
             }
         }
 
-        // ---------- Application Controls ----------
+        // ------------------------------------------------
+        // Application
+        // ------------------------------------------------
         ImGui::Separator();
         if (ImGui::Button("Quit Application", ImVec2(-1, 0))) {
             glfwSetWindowShouldClose(window, true);
@@ -336,36 +469,6 @@ int main() {
 
         ImGui::End();
 
-        // -----------------------------
-        // Game Objects Window
-        // -----------------------------
-        ImGui::Begin("Game Objects", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-        if (ImGui::CollapsingHeader("Scene Overview", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::Text("Camera Position:");
-            ImGui::Indent();
-            ImGui::Text("X: %.2f", mainCamera.position.x);
-            ImGui::Text("Y: %.2f", mainCamera.position.y);
-            ImGui::Text("Z: %.2f", mainCamera.position.z);
-            ImGui::Unindent();
-
-            ImGui::Text("Current Draw Mode: %s", append.c_str());
-        }
-
-        ImGui::End();
-
-        // -----------------------------
-        // Light Settings Window
-        // -----------------------------
-        ImGui::Begin("Light Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-        if (ImGui::CollapsingHeader("Directional Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::SliderFloat3("Direction", &lightDir.x, -10.0f, 10.0f, "%.2f");
-            ImGui::ColorEdit3("Color", &lightColor.x);
-            ImGui::SliderFloat("Intensity", &lightIntensity, 0.01f, 1.0f, "%.2f");
-        }
-
-        ImGui::End();
 #pragma endregion
 
         /// -----------------------------
@@ -376,11 +479,12 @@ int main() {
         
         suzanne.rotate(suzzaneRotate, glm::radians(rotationStrength) * static_cast<float>(deltaTime));
         
-        mainCamera.CameraMovement(window);
-        view = mainCamera.GetViewMatrix();
-        
-       // view = glm::lookAt(mainCamera.position, mainCamera.lookPivot, mainCamera.up);
-        projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
+        activeScene->render();
+        //mainCamera.CameraMovement(window);
+        //view = mainCamera.GetViewMatrix();
+        //
+       //// view = glm::lookAt(mainCamera.position, mainCamera.lookPivot, mainCamera.up);
+        //projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
 
         //cameraTarget = cameraPos + cameraDirection;
         //view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
@@ -405,31 +509,40 @@ int main() {
         //glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
         // and then we call:
         // model.render(drawMode);
-        glUseProgram(textureShaderProgram.ID); // This is a task for the material
-        // This line does the whole space transformation from object  > world > camera > screen (more or less)
-        glUniformMatrix4fv(textureModelUniform, 1, GL_FALSE, glm::value_ptr(projection * view * quadModel.getModelMatrix()));
-        
-        // This is also task of material:
-        glActiveTexture(GL_TEXTURE3);
-        glUniform1i(textureUniform, 3);        
-        glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
-        
-        quadModel.render(drawMode);
-        glBindVertexArray(0);
+        //glUseProgram(textureShaderProgram.ID); // This is a task for the material
+        //// This line does the whole space transformation from object  > world > camera > screen (more or less)
+        //glUniformMatrix4fv(textureModelUniform, 1, GL_FALSE, glm::value_ptr(projection * view * quadModel.getModelMatrix()));
+        //
+        //// This is also task of material:
+        //glActiveTexture(GL_TEXTURE3);
+        //glUniform1i(textureUniform, 3);        
+        //glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
+        //
+        //quadModel.render(drawMode);
+        //glBindVertexArray(0);
         //glActiveTexture(GL_TEXTURE0);
 
+        //glUseProgram(litShaderProgram.ID);
+        //glUniform3fv(lightPosUniform, 1, glm::value_ptr(lightDir));
+        //glUniform3fv(lightColorUniform, 1, glm::value_ptr(lightColor));
+        //glUniform1f(lightIntensityUniform, lightIntensity);
+        //glUniform3fv(cameraPositionUniformLitSHader, 1, glm::value_ptr(mainCamera.position));
+        //glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne.getModelMatrix()));
+        //glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(suzanne.getModelMatrix()));
+        //suzanne.render(drawMode);
+        //glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection* view* lightBulbSuzane.getModelMatrix()));
+        //glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(lightBulbSuzane.getModelMatrix()));
+        //lightBulbSuzane.render(drawMode);
+        //glBindVertexArray(0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glViewport(0, 0, g_width, g_height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(litShaderProgram.ID);
-        glUniform3fv(lightPosUniform, 1, glm::value_ptr(lightDir));
-        glUniform3fv(lightColorUniform, 1, glm::value_ptr(lightColor));
-        glUniform1f(lightIntensityUniform, lightIntensity);
-        glUniform3fv(cameraPositionUniformLitSHader, 1, glm::value_ptr(mainCamera.position));
-        glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne.getModelMatrix()));
-        glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(suzanne.getModelMatrix()));
-        suzanne.render(drawMode);
-        glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection* view* lightBulbSuzane.getModelMatrix()));
-        glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(lightBulbSuzane.getModelMatrix()));
-        lightBulbSuzane.render(drawMode);
-        glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorBuffer);
+        screenQuadModel.render(activeScene->drawMode);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

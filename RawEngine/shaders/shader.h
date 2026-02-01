@@ -17,6 +17,7 @@ namespace core {
         ~Shader() = default;
 
         void use() const;
+        void end() const;
 
         void setProperty(const std::string& name, bool value) const;
         void setProperty(const std::string& name, int value) const;

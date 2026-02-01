@@ -7,7 +7,7 @@
 namespace core {
 	class Material {
     public:
-		Material(void) = default;
+        Material(void) = default;
         Material(std::string pAlbedo, std::string pNormal, float pRoughness, float pMetallic) ;
 
         Material(glm::vec3 pAlbedoColor, float pRoughness, float pMetallic);

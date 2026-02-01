@@ -2,24 +2,53 @@
 
 namespace core
 {
-    void Scene::render()
-    {
-        // 1. render scene to framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Scene::Scene(GLFWwindow * window)
+            : window(window)
+        {
+            int w, h;
+            glfwGetFramebufferSize(window, &w, &h);
+            screenSize = glm::vec2((float)w, (float)h);
+            sceneCamera.position = glm::vec3(0.0f, 0.0f, 5.0f);
+            sceneCamera.lookPivot = glm::vec3(0.0f);
+        }
 
-        for (const auto& model : models)
-            model->render(drawMode);
+        void Scene::addModel(std::shared_ptr<Model> model)
+        {
+            models.push_back(std::move(model));
+			modelIndex++;
+        }
 
-        // 2. post-process
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        postProcessShader->use();
-        glBindTexture(GL_TEXTURE_2D, sceneColorTex);
+        void Scene::render()
+        {
+            // update screen size every frame (window resize safe)
+            int w, h;
+            glfwGetFramebufferSize(window, &w, &h);
+            screenSize = glm::vec2((float)w, (float)h);
 
-        //renderFullscreenQuad();
-    }
-    void Scene::addModel(std::shared_ptr<Model> model)
-    {
-        models.push_back(std::move(model));
-    }
+            sceneCamera.CameraMovement(window);
+            glm::mat4 view = sceneCamera.GetViewMatrix();
+			glm::mat4 projection = sceneCamera.GetProjectionMatrix(screenSize.x / screenSize.y, 0.1f, 100.0f); // ratio, near plane, far plane
+
+            for (const auto& model : models)
+            {
+                // model MUST already have a shader attached
+                auto shader = model->shader;
+                if (!shader) continue;
+
+                shader->use();
+
+                // camera
+                shader->setProperty("cameraPosition", sceneCamera.position);
+                glm::mat4 mvp = projection * view * model->getModelMatrix();
+                shader->setProperty("mvpMatrix", mvp);
+
+                //global lighting
+                shader->setProperty("lightPosition", lightDirection);
+                shader->setProperty("ambientLightColor", lightColor);
+                shader->setProperty("ambientLightIntensity", lightIntensity);
+
+                model->render(drawMode);
+            }
+        }
+    
 }

@@ -19,7 +19,10 @@ namespace core {
 
     void Shader::use() const
     {
-        glUseProgram(ID);
+        glUseProgram(ID);// initialize shader that will be used.
+    }
+    void Shader::end() const {
+        glBindVertexArray(0);
     }
 
     int Shader::getUniformLocation(const std::string& name) const

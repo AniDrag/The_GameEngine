@@ -7,10 +7,10 @@ namespace core {
         //if (!shader || !material ) return;
 
         // 1️ Use shader
-        shader->use();
+		//shader->use(); called by scene to input camera + lights once per model if they use different shaders.
 
         // 2️ Per-model uniform
-        shader->setProperty("modelMatrix", modelMatrix);
+        shader->setProperty("modelMatrix", modelMatrix); 
 
         // 3️ Bind material (textures + material uniforms)
         material.bind(*shader);
@@ -41,8 +41,9 @@ namespace core {
     glm::mat4 Model::getModelMatrix() const {
         return this->modelMatrix;
     }
-	void Model::attachShader(const std::shared_ptr<Shader>& shader) const {
-        this->shader;
+    void Model::attachShader(std::shared_ptr<Shader>& pShader) {
+        shader = pShader; // store shader for THIS model
     }
+    
    
 }

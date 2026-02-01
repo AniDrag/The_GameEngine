@@ -34,6 +34,9 @@ namespace core {
     glm::mat4 Camera::GetViewMatrix() const {
         return view;
     }
+    glm::mat4 Camera::GetProjectionMatrix(float aspectRatio, float nearPlane, float farPlane) const {
+        return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+	}
    // void Camera::CameraMovement(GLFWwindow* window) {
    //     // Recalculate the direction vectors ONCE per frame
    //

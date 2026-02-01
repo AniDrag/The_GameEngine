@@ -11,13 +11,14 @@ namespace core {
     private:
         std::vector<core::Mesh> meshes;
         glm::mat4 modelMatrix{ 1.0f };
-        std::shared_ptr<Shader> shader;
+        
     public:
-        Model(std::vector<core::Mesh> meshes) : meshes(meshes), modelMatrix(1) {}
+        std::shared_ptr<Shader> shader;
+        Model(std::vector<core::Mesh> meshes) : meshes(meshes), modelMatrix(1) {};
         core::Material material;
 
         void render(GLenum drawMode) const;
-        void position(glm::vec3& position);
+        void position(glm::vec3& pPosition);
         void translate(glm::vec3& translation);
         void rotate(glm::vec3& axis, float radians);
         void scale(glm::vec3& scale);
@@ -25,6 +26,6 @@ namespace core {
         const core::Material& getMaterial() const {
             return material;
         }
-        void attachShader(const std::shared_ptr<Shader>& shader) const;
+        void attachShader( std::shared_ptr<Shader>& shader);
     };
 };
