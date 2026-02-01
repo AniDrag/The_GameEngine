@@ -7,7 +7,7 @@ namespace core {
         //if (!shader || !material ) return;
 
         // 1️ Use shader
-		//shader->use(); called by scene to input camera + lights once per model if they use different shaders.
+		//shader->use(); //called by scene to input camera + lights once per model if they use different shaders.
 
         // 2️ Per-model uniform
         shader->setProperty("modelMatrix", modelMatrix); 

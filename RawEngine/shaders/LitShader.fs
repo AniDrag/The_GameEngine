@@ -1,59 +1,53 @@
 #version 400 core
 
+uniform vec3 cameraPosition;          // Camera Position
+uniform vec3 lightPosition;           // Light direction (normalized)
+uniform vec3 ambientLightColor;       // Ambient light color
+uniform float ambientLightIntensity;  // Ambient light strength
+
+uniform vec3 baseColor;
+uniform float metallic;
+uniform float roughness;
+uniform sampler2D albedoTex;
+uniform sampler2D normalTex;
+
+
+out vec4 FragColor;
 in vec3 fPos;
 in vec3 fNor;
 in vec2 uv;
 
-out vec4 FragColor;
-
-uniform vec3 cameraPosition;
-
-// light (point light)
-uniform vec3 lightPosition;
-uniform vec3 ambientLightColor;
-uniform float ambientLightIntensity;
-
-// material
-uniform vec3 baseColor;
-uniform float metallic;
-uniform float roughness;
-
-uniform sampler2D albedoTex;
 
 void main()
 {
-    // ---- Normal ----
-    vec3 N = normalize(fNor);
+   // Diffuse lighting
+    vec3 normalizedLightDir = normalize(lightPosition);
+    vec3 normalizedNormal = normalize(fNor);
+    vec3 normalizedCameraDir = normalize(cameraPosition - fPos);
+    float diffuseIntensity = max(dot(normalizedNormal, normalizedLightDir), 0.0f);
+    
+    // Base color (albedo)
+    vec3 albedo = vec3(0.1f, 0.2f, 0.8f);  // Default blue-ish color
+    
+    // Ambient component
+    vec3 ambient = ambientLightColor * ambientLightIntensity;
+    
+    // Diffuse component
+    float lightVertDistance = max(distance(lightPosition, fPos), 0.0f);
+    float attenuation = 1.0 / (1.0 + 0.09 * lightVertDistance + 0.032 * (lightVertDistance * lightVertDistance));
 
-    // ---- Light direction ----
-    vec3 L = normalize(lightPosition - fPos);
+    vec3 diffuse = diffuseIntensity * albedo * ambientLightColor * attenuation;
 
-    // ---- View direction ----
-    vec3 V = normalize(cameraPosition - fPos);
+    // Specular component
+    vec3 reflection = normalize(normalizedLightDir - 2.0 * dot(normalizedNormal, normalizedLightDir) * normalizedNormal);
+    float specularIntensity = max(dot(reflection, normalizedCameraDir), 0.0f);
+    
 
-    // ---- Albedo ----
-    vec3 albedo = baseColor;
-    if (textureSize(albedoTex, 0).x > 0)
-        albedo *= texture(albedoTex, uv).rgb;
 
-    // ---- Ambient ----
-    vec3 ambient = albedo * ambientLightColor * ambientLightIntensity;
+    // Combine lighting
+    vec3 finalColor = ambient + diffuse + specularIntensity;
+    
+    // Clamp and output
+    FragColor = vec4(finalColor, 1.0);
 
-    // ---- Diffuse (Lambert) ----
-    float diff = max(dot(N, L), 0.0);
-    vec3 diffuse = diff * albedo;
-
-    // ---- Specular (Blinn-Phong) ----
-    vec3 H = normalize(L + V);
-    float shininess = mix(128.0, 8.0, roughness);
-    float spec = pow(max(dot(N, H), 0.0), shininess);
-    vec3 specular = spec * mix(vec3(0.04), albedo, metallic);
-
-    // ---- Attenuation ----
-    float distance = length(lightPosition - fPos);
-    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-
-    vec3 color = (ambient + diffuse + specular) * attenuation;
-
-    FragColor = vec4(color, 1.0);
 }

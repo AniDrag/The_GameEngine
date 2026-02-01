@@ -2,7 +2,7 @@
 #include"texture.h"
 namespace core{
 
-	
+	// je so this is material 
 	Material::Material(std::string pAlbedo, std::string pNormal, float pRoughness, float pMetallic){
 		Texture albedoTex(pAlbedo);
 		Texture normalTex(pNormal);

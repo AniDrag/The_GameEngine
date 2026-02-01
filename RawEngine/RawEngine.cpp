@@ -173,40 +173,58 @@ int main() {
     const GLuint fragmentShader = generateShader("shaders/fragment.fs", GL_FRAGMENT_SHADER);
     const GLuint textureShader = generateShader("shaders/texture.fs", GL_FRAGMENT_SHADER);
     const GLuint litShader = generateShader("shaders/LitShader.fs", GL_FRAGMENT_SHADER);
+	const GLuint textureVertexShader = generateShader("shaders/vertex.vs", GL_VERTEX_SHADER);
 
     
     /// ------------------------------------------------
 	///     Shader Programs initialization
-    /// ------------------------------------------------    
+    /// ------------------------------------------------ 
+    int success;
+    char infoLog[512];
 	core::Shader modelShaderProgram(modelVertexShader, fragmentShader);
-    core::Shader textureShaderProgram(modelVertexShader, fragmentShader);
-    core::Shader litShaderProgram(modelVertexShader, fragmentShader);
+   // core::Shader textureShaderProgram(modelVertexShader, fragmentShader);
+    core::Shader litShaderProgram(modelVertexShader, fragmentShader);// Not realy a FBO shader though
+    //core::Shader fboShaderProgram(vertexShader, textureShader);// my bad
+    const unsigned int textureShaderProgram = glCreateProgram();
+    glAttachShader(textureShaderProgram, textureVertexShader);
+    glAttachShader(textureShaderProgram, textureShader);
+    glLinkProgram(textureShaderProgram);
+    glGetProgramiv(textureShaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(textureShaderProgram, 512, NULL, infoLog);
+        printf("Error! Making textureShaderProgram Shader Program: %s\n", infoLog);
+    }
     
     // Close calls
     glDeleteShader(modelVertexShader);
     glDeleteShader(fragmentShader);
     glDeleteShader(textureShader);
     glDeleteShader(litShader);
+	glDeleteShader(textureVertexShader);
 
     /// ------------------------------------------------------------------------
     // Generate Quad meshes for image gato
     /// ------------------------------------------------------------------------
     core::Mesh quad = core::Mesh::generateQuad();
-    core::Mesh screenQuadModel = core::Mesh::generateQuad();
+    core::Mesh screenQuad = core::Mesh::generateQuad();
+	core::Model screenQuadModel({ screenQuad });
     core::Model quadModel({ quad });
 	glm::vec3 quadTranslation = { 0, 0, -2.5 };
     glm::vec3 quadScale = { 5, 5, 1 };
     quadModel.translate(quadTranslation);
     quadModel.scale(quadScale);
+    
 
     /// ------------------------------------------------------------------------
     ///         Model and texture initialization and registration
     /// ------------------------------------------------------------------------
     core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
-    core::Model lightBulbSuzane = core::AssimpLoader::loadModel("models/sz.obj");
-    core::Texture cmgtGatoTexture("textures/dragonTexture.png");// CMGaTo_crop.png
-    suzanne.material.addAlbedoTexture("textures/dragonTexture.png");
-	auto litShaderProgramPtr = std::make_shared<core::Shader>(litShaderProgram);
+    //core::Model lightBulbSuzane = core::AssimpLoader::loadModel("models/sz.obj");
+    core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");// CMGaTo_crop.png
+    suzanne.material.addAlbedoTexture("textures/CMGaTo_crop.png");
+	auto litShaderProgramPtr = std::make_shared<core::Shader>(litShaderProgram); // one attachment here material gets ye worked like butter
+    //Even textures loaded
+
     suzanne.attachShader(litShaderProgramPtr);
 
 
@@ -301,7 +319,7 @@ int main() {
  //  glm::vec3 lightColor = glm::vec3(1, 0, 0);
  //  float lightIntensity = .1f;
    glm::vec3 lightbulbSuzana{ 1.0f, 2.0f, 5.0f };
-    lightBulbSuzane.position(lightbulbSuzana);
+   // lightBulbSuzane.position(lightbulbSuzana);
 
     glm::vec3 suzzaneRotate{ 0.0f, 1.0f, 0.0f };
 
@@ -337,10 +355,18 @@ int main() {
     GLenum drawBuf = GL_COLOR_ATTACHMENT0;
     glDrawBuffers(1, &drawBuf);
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+   //if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+   //    printf("ERROR::SCENE_FRAMEBUFFER:: Framebuffer is not complete!\n");
+   //}
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { // Wut?
         printf("ERROR::SCENE_FRAMEBUFFER:: Framebuffer is not complete!\n");
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return -1; // abort early
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
     while (!glfwWindowShouldClose(window)) {
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);// Clearing depth buffer and color buffer aka reseting values to draw new frame
         glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
@@ -416,7 +442,7 @@ int main() {
                 ImGui::DragFloat3(
                     "Direction",
                     &activeScene->lightDirection.x,
-                    0.05f, -10.0f, 10.0f
+                    0.05f, -1.0f, 1.0f
                 );
 
                 ImGui::ColorEdit3(
@@ -479,7 +505,7 @@ int main() {
         
         suzanne.rotate(suzzaneRotate, glm::radians(rotationStrength) * static_cast<float>(deltaTime));
         
-        activeScene->render();
+        activeScene->render(); // THis is it
         //mainCamera.CameraMovement(window);
         //view = mainCamera.GetViewMatrix();
         //
@@ -535,14 +561,14 @@ int main() {
         //lightBulbSuzane.render(drawMode);
         //glBindVertexArray(0);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glViewport(0, 0, g_width, g_height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(litShaderProgram.ID);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorBuffer);
-        screenQuadModel.render(activeScene->drawMode);
+       glBindFramebuffer(GL_FRAMEBUFFER, 0);
+       
+       glViewport(0, 0, g_width, g_height);
+       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+       glUseProgram(textureShaderProgram); // ye fboShader 
+       glActiveTexture(GL_TEXTURE0);
+       glBindTexture(GL_TEXTURE_2D, colorBuffer);
+       screenQuadModel.render(activeScene->drawMode);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

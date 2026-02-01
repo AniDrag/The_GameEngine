@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <glm/gtc/type_ptr.hpp>
 namespace core {
-    Shader::Shader(GLuint vertexShader, GLuint fragmentShader) {
+    Shader::Shader(GLuint vertexShader, GLuint fragmentShader) { // It does  i did it before and was fien,
       
         int success;
         char infoLog[512];
