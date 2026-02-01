@@ -1,4 +1,4 @@
-#include "scene.h"
+﻿#include "scene.h"
 
 namespace core
 {
@@ -27,7 +27,7 @@ namespace core
 
             sceneCamera.CameraMovement(window);
             glm::mat4 view = sceneCamera.GetViewMatrix();
-			glm::mat4 projection = sceneCamera.GetProjectionMatrix(screenSize.x / screenSize.y, 0.1f, 100.0f); // ratio, near plane, far plane
+            glm::mat4 projection = sceneCamera.GetProjectionMatrix(screenSize.x / screenSize.y, 0.1f, 100.0f); // ratio, near plane, far plane
 
             for (const auto& model : models)
             {
@@ -47,6 +47,11 @@ namespace core
                 shader->setProperty("ambientLightColor", lightColor);
                 shader->setProperty("ambientLightIntensity", lightIntensity);
 
+                // 2️ Per-model uniform
+                model->shader->setProperty("modelMatrix", model->getModelMatrix());
+
+                // 3️ Bind material (textures + material uniforms)
+                model->material.bind(*shader);
                 model->render(drawMode);
             }
         }

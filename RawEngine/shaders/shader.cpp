@@ -38,30 +38,48 @@ namespace core {
 
     void Shader::setProperty(const std::string& name, bool value) const
     {
-        glUniform1i(getUniformLocation(name), value);
+        GLint loc = glGetUniformLocation(ID, name.c_str());
+        if (loc != -1)
+            glUniform1i(loc, value);
     }
     void Shader::setProperty(const std::string& name, int value) const
     {
-        glUniform1i(getUniformLocation(name), value);
+        GLint loc = glGetUniformLocation(ID, name.c_str());
+        if (loc != -1)
+        {
+            glUniform1i(loc, value);
+        }
     }
-    void Shader::setProperty(const std::string& name, float value) const
-    {
-        glUniform1f(getUniformLocation(name), value);
+    void Shader::setProperty(const std::string& name, float value) const {
+        GLint loc = glGetUniformLocation(ID, name.c_str());
+        if (loc != -1)
+        {
+            glUniform1f(loc, value);
+        }
     }
     void Shader::setProperty(const std::string& name, const glm::vec2& value) const
     {
-        glUniform2fv(
-            getUniformLocation(name), 1, glm::value_ptr(value)
-        );
+        GLint loc = glGetUniformLocation(ID, name.c_str());
+        if (loc != -1) {
+            glUniform2fv(
+                loc, 1, glm::value_ptr(value)
+            );
+        }
     }
     void Shader::setProperty(const std::string& name, const glm::vec3& value) const
     {
-        glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(value));
+        GLint loc = glGetUniformLocation(ID, name.c_str());
+        if (loc != -1) {
+            glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(value));
+        }
     }
     void Shader::setProperty(const std::string& name, const glm::mat4& value) const
     {
-        glUniformMatrix4fv(
-            getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value)
-        );
+        GLint loc = glGetUniformLocation(ID, name.c_str());
+        if (loc != -1) {
+            glUniformMatrix4fv(
+                getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value)
+            );
+        }
     }
 }

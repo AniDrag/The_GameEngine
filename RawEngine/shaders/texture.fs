@@ -7,7 +7,5 @@ uniform sampler2D text;
 void main()
 {
     vec4 diffuse = texture(text, uv);
-    FragColor = vec4(diffuse.r, diffuse.g, diffuse.b, 1);
+    FragColor = vec4(vec3(diffuse / 1.0), 1);
 }
-// got 10 min
-// 

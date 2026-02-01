@@ -10,10 +10,10 @@ namespace core {
 		//shader->use(); //called by scene to input camera + lights once per model if they use different shaders.
 
         // 2️ Per-model uniform
-        shader->setProperty("modelMatrix", modelMatrix); 
+        //shader->setProperty("modelMatrix", modelMatrix); 
 
         // 3️ Bind material (textures + material uniforms)
-        material.bind(*shader);
+        //material.bind(*shader);
 
         // 4️ Draw meshes
         for (const auto& mesh : meshes)
