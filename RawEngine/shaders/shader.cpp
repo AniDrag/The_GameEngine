@@ -15,6 +15,8 @@ namespace core {
             glGetProgramInfoLog(ID, 512, NULL, infoLog);
             printf("Error! Making Shader Program: %s\n", infoLog);
 		}
+
+        
     }
 
     void Shader::use() const
@@ -31,55 +33,62 @@ namespace core {
         if (it != uniformCache.end())
             return it->second;
 
-        int location = glGetUniformLocation(ID, name.c_str());
-        uniformCache[name] = location;
+        GLint location = glGetUniformLocation(ID, name.c_str());
+
+#ifndef NDEBUG
+        if (location == -1) {
+            printf(
+                "Warning: uniform '%s' not found in shader %u\n",
+                name.c_str(),
+                ID
+            );
+        }
+#endif
+
+        uniformCache[name] = location; // cache even -1
         return location;
     }
 
     void Shader::setProperty(const std::string& name, bool value) const
     {
-        GLint loc = glGetUniformLocation(ID, name.c_str());
+        GLint loc = getUniformLocation(name);
         if (loc != -1)
             glUniform1i(loc, value);
     }
+
     void Shader::setProperty(const std::string& name, int value) const
     {
-        GLint loc = glGetUniformLocation(ID, name.c_str());
+        GLint loc = getUniformLocation(name);
         if (loc != -1)
-        {
             glUniform1i(loc, value);
-        }
     }
-    void Shader::setProperty(const std::string& name, float value) const {
-        GLint loc = glGetUniformLocation(ID, name.c_str());
+
+    void Shader::setProperty(const std::string& name, float value) const
+    {
+        GLint loc = getUniformLocation(name);
         if (loc != -1)
-        {
             glUniform1f(loc, value);
-        }
     }
+
     void Shader::setProperty(const std::string& name, const glm::vec2& value) const
     {
-        GLint loc = glGetUniformLocation(ID, name.c_str());
-        if (loc != -1) {
-            glUniform2fv(
-                loc, 1, glm::value_ptr(value)
-            );
-        }
+        GLint loc = getUniformLocation(name);
+        if (loc != -1)
+            glUniform2fv(loc, 1, glm::value_ptr(value));
     }
+
     void Shader::setProperty(const std::string& name, const glm::vec3& value) const
     {
-        GLint loc = glGetUniformLocation(ID, name.c_str());
-        if (loc != -1) {
-            glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(value));
-        }
+        GLint loc = getUniformLocation(name);
+        if (loc != -1)
+            glUniform3fv(loc, 1, glm::value_ptr(value));
     }
+
     void Shader::setProperty(const std::string& name, const glm::mat4& value) const
     {
-        GLint loc = glGetUniformLocation(ID, name.c_str());
-        if (loc != -1) {
-            glUniformMatrix4fv(
-                getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value)
-            );
-        }
+        GLint loc = getUniformLocation(name);
+        if (loc != -1)
+            glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
     }
+
 }

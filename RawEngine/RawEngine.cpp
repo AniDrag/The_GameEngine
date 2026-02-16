@@ -34,7 +34,14 @@
 int g_width = 800;
 int g_height = 600;
 GLenum drawMode = GL_TRIANGLES;
+bool ppGrayscale = false;
+bool ppInvert = false;
 
+bool ppBloom = false;
+float ppBloomStrength = 1;
+
+bool ppPixelize = false;
+float ppPixelSize = 512;
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -174,7 +181,8 @@ int main() {
     const GLuint textureShader = generateShader("shaders/texture.fs", GL_FRAGMENT_SHADER);
     const GLuint litShader = generateShader("shaders/LitShader.fs", GL_FRAGMENT_SHADER);
 	const GLuint textureVertexShader = generateShader("shaders/vertex.vs", GL_VERTEX_SHADER);
-
+    const GLuint postProcessFS = generateShader("shaders/PostProcessing.fs", GL_FRAGMENT_SHADER);
+    
     
     /// ------------------------------------------------
 	///     Shader Programs initialization
@@ -183,24 +191,20 @@ int main() {
     char infoLog[512];
 	core::Shader modelShaderProgram(modelVertexShader, fragmentShader);
    // core::Shader textureShaderProgram(modelVertexShader, fragmentShader);
-    core::Shader litShaderProgram(modelVertexShader, fragmentShader);// Not realy a FBO shader though
-    //core::Shader fboShaderProgram(vertexShader, textureShader);// my bad
-    const unsigned int textureShaderProgram = glCreateProgram();
-    glAttachShader(textureShaderProgram, textureVertexShader);
-    glAttachShader(textureShaderProgram, textureShader);
-    glLinkProgram(textureShaderProgram);
-    glGetProgramiv(textureShaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(textureShaderProgram, 512, NULL, infoLog);
-        printf("Error! Making textureShaderProgram Shader Program: %s\n", infoLog);
-    }
+    core::Shader litShaderProgram(modelVertexShader, litShader);
+    core::Shader textureShaderProgram(textureVertexShader, textureShader);
+    core::Shader postProcessShader(textureVertexShader, postProcessFS);
     
+
+
+ 
     // Close calls
     glDeleteShader(modelVertexShader);
     glDeleteShader(fragmentShader);
     glDeleteShader(textureShader);
     glDeleteShader(litShader);
 	glDeleteShader(textureVertexShader);
+    glDeleteShader(postProcessFS);
 
     /// ------------------------------------------------------------------------
     // Generate Quad meshes for image gato
@@ -291,18 +295,7 @@ int main() {
    // glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
 
 
-    /// Uniforms
-  //  GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram.ID, "mvpMatrix");
-  //  GLint lightPosUniformModel = glGetUniformLocation(modelShaderProgram.ID, "lightPosition");
-  //  GLint textureModelUniform = glGetUniformLocation(textureShaderProgram.ID, "mvpMatrix");
-  //  GLint modelMatrix = glGetUniformLocation(textureShaderProgram.ID, "modelMatrix");
-  //  GLint textureUniform = glGetUniformLocation(textureShaderProgram.ID, "text");
-  //
-  //  GLint lightPosUniform = glGetUniformLocation(litShaderProgram.ID, "lightPosition");
-  //  GLint lightColorUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightColor");
-  //  GLint lightIntensityUniform = glGetUniformLocation(litShaderProgram.ID, "ambientLightIntensity");
-  //  GLint cameraPositionUniformLitSHader = glGetUniformLocation(litShaderProgram.ID, "cameraPosition");
-    /// -----------------------------
+    
     /// Loop Runtime
     /// -----------------------------
     double currentTime = glfwGetTime();
@@ -369,9 +362,11 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);// Clearing depth buffer and color buffer aka reseting values to draw new frame
+        // ---  Render scene into FBO ---
         glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
         glViewport(0, 0, g_width, g_height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 #pragma region ImGui region
 
@@ -414,7 +409,24 @@ int main() {
                 );
             }
         }
+        ImGui::Separator();
 
+        // ------------------------------------------------
+       // FBO settings Selection
+       // ------------------------------------------------
+        if (ImGui::CollapsingHeader("Post Processing", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::Checkbox("Grayscale", &ppGrayscale);
+            ImGui::Checkbox("Invert Colors", &ppInvert);
+
+            ImGui::Checkbox("Bloom", &ppBloom);
+            if (ppBloom)
+                ImGui::SliderFloat("Bloom Strength", &ppBloomStrength, 0.0f, 2.0f);
+
+            ImGui::Checkbox("Pixelize", &ppPixelize);
+            if (ppPixelize)
+                ImGui::SliderFloat("Pixel Size", &ppPixelSize, 16.0f, 512.0f);
+        }
         // ------------------------------------------------
         // Camera
         // ------------------------------------------------
@@ -503,9 +515,13 @@ int main() {
 
         processInput(window);
         
-        suzanne.rotate(suzzaneRotate, glm::radians(rotationStrength) * static_cast<float>(deltaTime));
+        //suzanne.rotate(suzzaneRotate, glm::radians(rotationStrength) * static_cast<float>(deltaTime));
         
         activeScene->render(); // THis is it
+
+#pragma region  legacy code
+
+
         //mainCamera.CameraMovement(window);
         //view = mainCamera.GetViewMatrix();
         //
@@ -560,15 +576,42 @@ int main() {
         //glUniformMatrix4fv(modelMatrix, 1, GL_FALSE, glm::value_ptr(lightBulbSuzane.getModelMatrix()));
         //lightBulbSuzane.render(drawMode);
         //glBindVertexArray(0);
+#pragma endregion
 
-       glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);// bind FBO
+
+        // --- Render screen quad with FBO texture ---
+        glViewport(0, 0, g_width, g_height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+       // glDisable(GL_DEPTH_TEST);
+        postProcessShader.use();
+
+        postProcessShader.setProperty("uGrayscale", ppGrayscale);
+        postProcessShader.setProperty("uInvert", ppInvert);
+        postProcessShader.setProperty("uPixelize", ppPixelize);
+        postProcessShader.setProperty("uPixelSize", ppPixelSize);
+       //
+       // postProcessShader.setProperty("uPixelSize", ppPixelSize);
+       // postProcessShader.setProperty("uBloomStrength", ppBloomStrength);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorBuffer);
+        postProcessShader.setProperty("text", 0);
+
+        screenQuadModel.render(GL_TRIANGLES);
+       // glEnable(GL_DEPTH_TEST);
+
+      /* glBindFramebuffer(GL_FRAMEBUFFER, 0);// bind FBO
        
+       // --- Render screen quad with FBO texture ---
        glViewport(0, 0, g_width, g_height);
        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       glUseProgram(textureShaderProgram); // ye fboShader 
+
+       glUseProgram(textureShaderProgram.ID);
        glActiveTexture(GL_TEXTURE0);
-       glBindTexture(GL_TEXTURE_2D, colorBuffer);
-       screenQuadModel.render(activeScene->drawMode);
+       glBindTexture(GL_TEXTURE_2D, colorBuffer); // FBO color attachment
+       screenQuadModel.render(GL_TRIANGLES);
+       */
         
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -1,53 +1,116 @@
 #version 400 core
 
-uniform vec3 cameraPosition;          // Camera Position
-uniform vec3 lightPosition;           // Light direction (normalized)
-uniform vec3 ambientLightColor;       // Ambient light color
-uniform float ambientLightIntensity;  // Ambient light strength
+// ------------------------------------------------------------
+// Global / scene uniforms (set per-frame by Scene)
+// ------------------------------------------------------------
+uniform vec3 cameraPosition;          // World-space camera position
+uniform vec3 lightPosition;           // World-space light position
+uniform vec3 ambientLightColor;       // Ambient light color is a world light properties
+uniform float ambientLightIntensity;  // Ambient strength is a world light properties
 
-uniform vec3 baseColor;
-uniform float metallic;
-uniform float roughness;
-uniform sampler2D albedoTex;
-uniform sampler2D normalTex;
+// ------------------------------------------------------------
+// Material uniforms (set per-model by Material)
+// ------------------------------------------------------------
+uniform vec3  baseColor;              // Base material color
+uniform float metallic;               // 0 = not metal, 1 = metal
+uniform float roughness;              // 0 = smooth, 1 = rough
 
+uniform sampler2D albedoTex;          // Albedo texture
+uniform sampler2D normalTex;          // (unused for now, kept alive)
 
-out vec4 FragColor;
-in vec3 fPos;
-in vec3 fNor;
-in vec2 uv;
+// ------------------------------------------------------------
+// Inputs from vertex shader
+// ------------------------------------------------------------
+in vec3 fPos;                         // World-space fragment position
+in vec3 fNor;                         // World-space normal
+in vec2 uv;                           // Texture coordinates
 
+layout (location = 0) out vec4 FragColor;   // normal HDR scene
+layout (location = 1) out vec4 BrightColor; // bright regions
 
 void main()
 {
-   // Diffuse lighting
-    vec3 normalizedLightDir = normalize(lightPosition);
-    vec3 normalizedNormal = normalize(fNor);
-    vec3 normalizedCameraDir = normalize(cameraPosition - fPos);
-    float diffuseIntensity = max(dot(normalizedNormal, normalizedLightDir), 0.0f);
-    
-    // Base color (albedo)
-    vec3 albedo = vec3(0.1f, 0.2f, 0.8f);  // Default blue-ish color
-    
-    // Ambient component
-    vec3 ambient = ambientLightColor * ambientLightIntensity;
-    
-    // Diffuse component
-    float lightVertDistance = max(distance(lightPosition, fPos), 0.0f);
-    float attenuation = 1.0 / (1.0 + 0.09 * lightVertDistance + 0.032 * (lightVertDistance * lightVertDistance));
+    // Normalize inputs
+    vec3 N = normalize(fNor);
+    vec3 L = normalize(lightPosition - fPos);     // Light direction
+    vec3 V = normalize(cameraPosition - fPos);    // View direction
 
-    vec3 diffuse = diffuseIntensity * albedo * ambientLightColor * attenuation;
+     // --------------------------------------------------------
+    // Albedo
+    // --------------------------------------------------------
+    vec3 albedo = baseColor * texture(albedoTex, uv).rgb;
 
-    // Specular component
-    vec3 reflection = normalize(normalizedLightDir - 2.0 * dot(normalizedNormal, normalizedLightDir) * normalizedNormal);
-    float specularIntensity = max(dot(reflection, normalizedCameraDir), 0.0f);
-    
+    // --------------------------------------------------------
+    // Ambient
+    // --------------------------------------------------------
+    vec3 ambient = albedo * ambientLightColor * ambientLightIntensity;
 
+     // --------------------------------------------------------
+    // Diffuse (Lambert)
+    // --------------------------------------------------------
+    float distance = length(lightPosition - fPos);
+    float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
+    float NdotL = max(dot(N, L), 0.0);
+    vec3 diffuse = albedo * NdotL * attenuation;
 
+     // --------------------------------------------------------
+    // Specular (Phong)
+    // --------------------------------------------------------
+    vec3 R = reflect(-L, N);
+
+    // Convert roughness → shininess
+    float shininess = mix(128.0, 8.0, clamp(roughness, 0.0, 1.0));
+
+    float specFactor = pow(max(dot(R, V), 0.0), shininess);
+
+    // Metals have colored specular, dielectrics use white
+    vec3 specColor = mix(vec3(1.0), albedo, metallic);
+    vec3 specular = specColor * specFactor;
+
+    // --------------------------------------------------------
     // Combine lighting
-    vec3 finalColor = ambient + diffuse + specularIntensity;
-    
-    // Clamp and output
+    // --------------------------------------------------------
+    vec3 finalColor = ambient + diffuse + specular;
+
     FragColor = vec4(finalColor, 1.0);
+
+    // --- extract brightness ---
+    float brightness = dot(finalColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    float threshold = 1.0;
+    if (brightness > threshold)
+        BrightColor = vec4(finalColor.rgb, 1.0);
+    else
+        BrightColor = vec4(0.0);
+
+    /////////////////////////////////////// OLD for refrence /////
+   // Diffuse lighting
+   // vec3 normalizedLightDir = normalize(lightPosition);
+   // vec3 normalizedNormal = normalize(fNor);
+   // vec3 normalizedCameraDir = normalize(cameraPosition - fPos);
+   // float diffuseIntensity = max(dot(normalizedNormal, normalizedLightDir), 0.0f);
+   // 
+   // // Base color (albedo)
+   // vec3 albedo = baseColor * texture(albedoTex, uv).rgb;  // Default color + texture
+   // 
+   // // Ambient component
+   // vec3 ambient = ambientLightColor * ambientLightIntensity;
+   // 
+   // // Diffuse component
+   // float lightVertDistance = max(distance(lightPosition, fPos), 0.0f);
+   // float attenuation = 1.0 / (1.0 + 0.09 * lightVertDistance + 0.032 * (lightVertDistance * lightVertDistance));
+   //
+   // vec3 diffuse = diffuseIntensity * albedo * ambientLightColor * attenuation;
+   //
+   // // Specular component
+   // vec3 reflection = normalize(normalizedLightDir - 2.0 * dot(normalizedNormal, normalizedLightDir) * normalizedNormal);
+   // float specularIntensity = max(dot(reflection, normalizedCameraDir), 0.0f);
+   // 
+   //
+   //
+   // // Combine lighting
+   // vec3 finalColor = ambient + diffuse + specularIntensity;
+   // 
+   // // Clamp and output
+   // FragColor = vec4(finalColor, 1.0);
 
 }

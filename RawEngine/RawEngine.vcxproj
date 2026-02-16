@@ -149,9 +149,12 @@
     <ClInclude Include="shaders\shader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\blur.fs" />
+    <None Include="shaders\blur.vs" />
     <None Include="shaders\fragment.fs" />
     <None Include="shaders\LitShader.fs" />
     <None Include="shaders\modelVertex.vs" />
+    <None Include="shaders\PostProcessing.fs" />
     <None Include="shaders\texture.fs" />
     <None Include="shaders\vertex.vs" />
   </ItemGroup>

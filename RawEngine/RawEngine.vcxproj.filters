@@ -98,5 +98,8 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="shaders\LitShader.fs" />
+    <None Include="shaders\PostProcessing.fs" />
+    <None Include="shaders\blur.vs" />
+    <None Include="shaders\blur.fs" />
   </ItemGroup>
 </Project>

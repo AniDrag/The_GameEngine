@@ -10,10 +10,10 @@ namespace core{
 		normal = normalTex.getId();
 		roughness = pRoughness;
 		metallic = pMetallic;
-		albedoColor = glm::vec3(1.0f);
+		baseColor = glm::vec3(1.0f);
 	}
 	Material::Material(glm::vec3 pAlbedoColor, float pRoughness, float pMetallic){
-		albedoColor = pAlbedoColor;
+		baseColor = pAlbedoColor;
 		roughness = pRoughness;
 		metallic = pMetallic;
 		albedo = -1;
@@ -21,17 +21,17 @@ namespace core{
 	}
 
 	void Material::bind(const Shader& shader) const {
-		shader.setProperty("baseColor", albedoColor);
+		shader.setProperty("baseColor", baseColor);
 		shader.setProperty("roughness", roughness);
 		shader.setProperty("metallic", metallic);
 
 		//open GL bind textures?
-		if (albedo >= 0) {
+		if (albedo > 0) {
 			glActiveTexture(GL_TEXTURE0);
 			shader.setProperty("albedoTex", 0);
 			glBindTexture(GL_TEXTURE_2D, albedo);
 		}
-		if (normal >= 0) {
+		if (normal > 0) {
 			glActiveTexture(GL_TEXTURE1);
 			shader.setProperty("normalTex", 1);
 			glBindTexture(GL_TEXTURE_2D, normal);
@@ -54,6 +54,10 @@ namespace core{
 		}
 		Texture albedoTex(pAlbedoPath);
 		albedo = albedoTex.getId();
+	}
+	void Material::addAlbedoTexture(GLuint index) {
+		
+		albedo = index;
 	}
 
 }

@@ -27,7 +27,13 @@ namespace core
 
             sceneCamera.CameraMovement(window);
             glm::mat4 view = sceneCamera.GetViewMatrix();
-            glm::mat4 projection = sceneCamera.GetProjectionMatrix(screenSize.x / screenSize.y, 0.1f, 100.0f); // ratio, near plane, far plane
+			//Safety cuz i get null cheks, too fast fot the computer i guess 
+            float aspect = 1.0f;
+            if (screenSize.y > 0.0f)
+            {
+                aspect = screenSize.x / screenSize.y;
+            }
+            glm::mat4 projection = sceneCamera.GetProjectionMatrix(aspect, 0.1f, 100.0f); // ratio, near plane, far plane
 
             for (const auto& model : models)
             {
