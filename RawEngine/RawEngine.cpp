@@ -337,6 +337,17 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
 
+    // color textures for bloom
+    GLuint brightBuffer;
+    glGenTextures(1, &brightBuffer);
+    glBindTexture(GL_TEXTURE_2D, brightBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_width, g_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, brightBuffer, 0);
+
     // depth+stencil renderbuffer for the scene FBO
     GLuint sceneRBO = 0;
     glGenRenderbuffers(1, &sceneRBO);
@@ -591,8 +602,8 @@ int main() {
         postProcessShader.setProperty("uPixelize", ppPixelize);
         postProcessShader.setProperty("uPixelSize", ppPixelSize);
        //
-       // postProcessShader.setProperty("uPixelSize", ppPixelSize);
-       // postProcessShader.setProperty("uBloomStrength", ppBloomStrength);
+        postProcessShader.setProperty("uBloom", ppBloom);
+        postProcessShader.setProperty("uBloomIntensity", ppBloomStrength);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorBuffer);
