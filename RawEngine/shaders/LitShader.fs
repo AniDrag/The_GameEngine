@@ -80,7 +80,7 @@ void main()
     // --- extract brightness ---
     // Extract brightness with soft knee
     float brightness = dot(finalColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    float threshold = uBloomThreshold //0.8 default
+    float threshold = uBloomThreshold; //0.8 default
     float knee = 0.2;        // Soft knee range
     
     float brightnessFactor = 0.0;
