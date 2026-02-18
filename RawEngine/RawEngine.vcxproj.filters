@@ -101,5 +101,8 @@
     <None Include="shaders\PostProcessing.fs" />
     <None Include="shaders\blur.vs" />
     <None Include="shaders\blur.fs" />
+    <None Include="packages.config" />
+    <None Include="shaders\bloom_combine.fs" />
+    <None Include="shaders\downsample.fs" />
   </ItemGroup>
 </Project>

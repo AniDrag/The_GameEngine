@@ -18,6 +18,9 @@ uniform float roughness;              // 0 = smooth, 1 = rough
 uniform sampler2D albedoTex;          // Albedo texture
 uniform sampler2D normalTex;          // (unused for now, kept alive)
 
+
+// Bloom settings
+uniform float uBloomThreshold;
 // ------------------------------------------------------------
 // Inputs from vertex shader
 // ------------------------------------------------------------
@@ -75,12 +78,27 @@ void main()
     FragColor = vec4(finalColor, 1.0);
 
     // --- extract brightness ---
+    // Extract brightness with soft knee
     float brightness = dot(finalColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    float threshold = 1.0;
-    if (brightness > threshold)
-        BrightColor = vec4(finalColor.rgb, 1.0);
-    else
-        BrightColor = vec4(0.0);
+    float threshold = uBloomThreshold //0.8 default
+    float knee = 0.2;        // Soft knee range
+    
+    float brightnessFactor = 0.0;
+    if (brightness > threshold) {
+        if (brightness < threshold + knee) {
+            // Soft knee region - smooth transition
+            brightnessFactor = (brightness - threshold) / knee;
+        } else {
+            brightnessFactor = 1.0;
+        }
+    }
+    
+    vec3 brightColor = finalColor.rgb * brightnessFactor;
+    
+    // Optional: Clamp bright colors to prevent speckles
+    brightColor = min(brightColor, vec3(10.0));  // HDR clamp
+    
+    BrightColor = vec4(brightColor, 1.0);
 
     /////////////////////////////////////// OLD for refrence /////
    // Diffuse lighting

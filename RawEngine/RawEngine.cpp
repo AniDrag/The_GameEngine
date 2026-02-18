@@ -182,6 +182,10 @@ int main() {
     const GLuint litShader = generateShader("shaders/LitShader.fs", GL_FRAGMENT_SHADER);
 	const GLuint textureVertexShader = generateShader("shaders/vertex.vs", GL_VERTEX_SHADER);
     const GLuint postProcessFS = generateShader("shaders/PostProcessing.fs", GL_FRAGMENT_SHADER);
+    const GLuint blurVertex = generateShader("shaders/blur.vs", GL_VERTEX_SHADER);
+    const GLuint blurFragment = generateShader("shaders/blur.fs", GL_FRAGMENT_SHADER);
+    const GLuint combineFragment = generateShader("shaders/bloom_combine.fs", GL_FRAGMENT_SHADER);
+    const GLuint downsampler = generateShader("shaders/downsample.fs", GL_FRAGMENT_SHADER);
     
     
     /// ------------------------------------------------
@@ -193,9 +197,11 @@ int main() {
    // core::Shader textureShaderProgram(modelVertexShader, fragmentShader);
     core::Shader litShaderProgram(modelVertexShader, litShader);
     core::Shader textureShaderProgram(textureVertexShader, textureShader);
-    core::Shader postProcessShader(textureVertexShader, postProcessFS);
-    
 
+    core::Shader postProcessShader(textureVertexShader, postProcessFS);    
+    core::Shader blurShader(blurVertex, blurFragment);
+    core::Shader combineShader(textureVertexShader, combineFragment);
+    core::Shader downsampleShader(textureVertexShader, downsampler);
 
  
     // Close calls
@@ -204,7 +210,12 @@ int main() {
     glDeleteShader(textureShader);
     glDeleteShader(litShader);
 	glDeleteShader(textureVertexShader);
+
     glDeleteShader(postProcessFS);
+    glDeleteShader(blurVertex);
+    glDeleteShader(blurFragment);
+    glDeleteShader(combineFragment);
+    glDeleteShader(downsampler);
 
     /// ------------------------------------------------------------------------
     // Generate Quad meshes for image gato
@@ -322,52 +333,86 @@ int main() {
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     GLuint sceneFBO = 0;
     glGenFramebuffers(1, &sceneFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
 
-    // color texture that will contain the rendered scene
+    // Color attachment 0 – HDR scene color
     GLuint colorBuffer;
     glGenTextures(1, &colorBuffer);
     glBindTexture(GL_TEXTURE_2D, colorBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_width, g_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, g_width, g_height, 0, GL_RGBA, GL_FLOAT, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
 
-    // color textures for bloom
+    // Color attachment 1 – Bright pass (also HDR)
     GLuint brightBuffer;
     glGenTextures(1, &brightBuffer);
     glBindTexture(GL_TEXTURE_2D, brightBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_width, g_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, g_width, g_height, 0, GL_RGBA, GL_FLOAT, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, brightBuffer, 0);
 
-    // depth+stencil renderbuffer for the scene FBO
-    GLuint sceneRBO = 0;
+    // Depth/stencil renderbuffer
+    GLuint sceneRBO;
     glGenRenderbuffers(1, &sceneRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, sceneRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, sceneRBO);
 
-    // draw buffers and completeness
-    GLenum drawBuf = GL_COLOR_ATTACHMENT0;
-    glDrawBuffers(1, &drawBuf);
+    // Set draw buffers to both attachments
+    GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, drawBuffers);
 
-   //if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-   //    printf("ERROR::SCENE_FRAMEBUFFER:: Framebuffer is not complete!\n");
-   //}
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { // Wut?
-        printf("ERROR::SCENE_FRAMEBUFFER:: Framebuffer is not complete!\n");
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        return -1; // abort early
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        printf("ERROR: Scene FBO incomplete!\n");
+        return -1;
     }
+
+    GLuint downsampleFBO;
+    GLuint downsampleTexture;
+
+    int halfW = g_width / 2;
+    int halfH = g_height / 2;
+
+    glGenFramebuffers(1, &downsampleFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, downsampleFBO);
+
+    glGenTextures(1, &downsampleTexture);
+    glBindTexture(GL_TEXTURE_2D, downsampleTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, halfW, halfH, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, downsampleTexture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        printf("ERROR: Downsample FBO incomplete!\n");
+
+    // --- Ping-pong FBOs for separable blur ---
+    GLuint pingpongFBO[2];
+    GLuint pingpongBuffer[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongBuffer);
+    for (int i = 0; i < 2; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, halfW, halfH, 0, GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0);
+    }
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
@@ -431,8 +476,12 @@ int main() {
             ImGui::Checkbox("Invert Colors", &ppInvert);
 
             ImGui::Checkbox("Bloom", &ppBloom);
-            if (ppBloom)
+            if (ppBloom) {
+                if (activeScene) {
+                    ImGui::SliderFloat("Bloom Threshold", &activeScene->ppBloomThreshold, 0.0f, 2.0f);
+                }
                 ImGui::SliderFloat("Bloom Strength", &ppBloomStrength, 0.0f, 2.0f);
+            }
 
             ImGui::Checkbox("Pixelize", &ppPixelize);
             if (ppPixelize)
@@ -528,7 +577,7 @@ int main() {
         
         //suzanne.rotate(suzzaneRotate, glm::radians(rotationStrength) * static_cast<float>(deltaTime));
         
-        activeScene->render(); // THis is it
+        activeScene->render(); 
 
 #pragma region  legacy code
 
@@ -588,29 +637,75 @@ int main() {
         //lightBulbSuzane.render(drawMode);
         //glBindVertexArray(0);
 #pragma endregion
+        glDisable(GL_DEPTH_TEST);
+        if (ppBloom) {
+            // --- Downsample bright texture ---
+            glBindFramebuffer(GL_FRAMEBUFFER, downsampleFBO);
+            glViewport(0, 0, g_width / 2, g_height / 2);
+            glClear(GL_COLOR_BUFFER_BIT);
+            downsampleShader.use();
+            downsampleShader.setProperty("uTexture", 0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, brightBuffer);
+            screenQuadModel.render(GL_TRIANGLES);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);// bind FBO
+            // --- Horizontal blur ---
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[0]);
+            glViewport(0, 0, g_width / 2, g_height / 2);
+            glClear(GL_COLOR_BUFFER_BIT);
+            blurShader.use();
+            blurShader.setProperty("uTexture", 0);
+            blurShader.setProperty("uHorizontal", true);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, downsampleTexture);
+            screenQuadModel.render(GL_TRIANGLES);
 
-        // --- Render screen quad with FBO texture ---
-        glViewport(0, 0, g_width, g_height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       // glDisable(GL_DEPTH_TEST);
-        postProcessShader.use();
+            // --- Vertical blur ---
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[1]);
+            glViewport(0, 0, g_width / 2, g_height / 2);      // <-- ADDED
+            glClear(GL_COLOR_BUFFER_BIT);
+            blurShader.setProperty("uHorizontal", false);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[0]);
+            screenQuadModel.render(GL_TRIANGLES);
 
-        postProcessShader.setProperty("uGrayscale", ppGrayscale);
-        postProcessShader.setProperty("uInvert", ppInvert);
-        postProcessShader.setProperty("uPixelize", ppPixelize);
-        postProcessShader.setProperty("uPixelSize", ppPixelSize);
-       //
-        postProcessShader.setProperty("uBloom", ppBloom);
-        postProcessShader.setProperty("uBloomIntensity", ppBloomStrength);
+            // --- Combine ---
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, g_width, g_height);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorBuffer);
-        postProcessShader.setProperty("text", 0);
+            combineShader.use();
+            combineShader.setProperty("uSceneTexture", 0);
+            combineShader.setProperty("uBloomTexture", 1);
+            combineShader.setProperty("uBloomIntensity", ppBloomStrength);
+            combineShader.setProperty("uGrayscale", ppGrayscale);
+            combineShader.setProperty("uInvert", ppInvert);
+            combineShader.setProperty("uPixelize", ppPixelize);
+            combineShader.setProperty("uPixelSize", ppPixelSize);
 
-        screenQuadModel.render(GL_TRIANGLES);
-       // glEnable(GL_DEPTH_TEST);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, colorBuffer);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[1]);
+            screenQuadModel.render(GL_TRIANGLES);
+        }
+        else {
+            // No bloom – just post?process the scene directly
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            postProcessShader.use();
+            postProcessShader.setProperty("uGrayscale", ppGrayscale);
+            postProcessShader.setProperty("uInvert", ppInvert);
+            postProcessShader.setProperty("uPixelize", ppPixelize);
+            postProcessShader.setProperty("uPixelSize", ppPixelSize);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, colorBuffer);
+            postProcessShader.setProperty("text", 0);
+            screenQuadModel.render(GL_TRIANGLES);
+        }
+
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);// bind FBO just in case
+
 
       /* glBindFramebuffer(GL_FRAMEBUFFER, 0);// bind FBO
        
@@ -624,6 +719,7 @@ int main() {
        screenQuadModel.render(GL_TRIANGLES);
        */
         
+       // ImGui rendering always happens after scene is drawn to default framebuffer
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

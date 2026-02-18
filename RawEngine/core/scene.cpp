@@ -53,6 +53,7 @@ namespace core
                 shader->setProperty("ambientLightColor", lightColor);
                 shader->setProperty("ambientLightIntensity", lightIntensity);
 
+                shader->setProperty("uBloomThreshold", ppBloomThreshold);
                 // 2️ Per-model uniform
                 model->shader->setProperty("modelMatrix", model->getModelMatrix());
 

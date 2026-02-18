@@ -25,6 +25,7 @@ namespace core {
         glm::vec3 lightDirection{ 1.0f, -1.0f, 0.0f };
         glm::vec3 lightColor{ 1.0f, 1.0f, 1.0f };
         float lightIntensity{ 0.1f };
+        float ppBloomThreshold{0.8f};
 
         GLuint drawMode = GL_TRIANGLES;
 		int modelIndex = 0;// amount of models
