@@ -39,26 +39,21 @@ namespace core
             {
                 // model MUST already have a shader attached
                 auto shader = model->shader;
-                if (!shader) continue;
+                if (!shader || !model->material) continue;
 
                 shader->use();
-
-                // camera
+                // set common uniforms (camera, MVP, lighting) – these are assumed to exist in the shader
                 shader->setProperty("cameraPosition", sceneCamera.position);
-                glm::mat4 mvp = projection * view * model->getModelMatrix();
-                shader->setProperty("mvpMatrix", mvp);
-
-                //global lighting
+                shader->setProperty("mvpMatrix", projection * view * model->getModelMatrix());
                 shader->setProperty("lightPosition", lightDirection);
                 shader->setProperty("ambientLightColor", lightColor);
                 shader->setProperty("ambientLightIntensity", lightIntensity);
+                shader->setProperty("uBloomThreshold", ppBloomThreshold); // is inside a FBO shader
+                shader->setProperty("modelMatrix", model->getModelMatrix());
 
-                shader->setProperty("uBloomThreshold", ppBloomThreshold);
-                // 2️ Per-model uniform
-                model->shader->setProperty("modelMatrix", model->getModelMatrix());
+                // Bind material‑specific uniforms and textures
+                model->material->bind(*shader);
 
-                // 3️ Bind material (textures + material uniforms)
-                model->material.bind(*shader);
                 model->render(drawMode);
             }
         }

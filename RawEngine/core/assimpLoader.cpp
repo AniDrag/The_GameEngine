@@ -59,7 +59,18 @@ namespace core {
                     mesh->mNormals[i].y, 
                     mesh->mNormals[i].z
                 ), 
-                uvs
+                uvs,
+                glm::vec3(
+                    mesh->mTangents[i].x,
+                    mesh->mTangents[i].y,
+                    mesh->mTangents[i].z
+                ),
+                glm::vec3(
+                    mesh->mBitangents[i].x,
+                    mesh->mBitangents[i].y,
+                    mesh->mBitangents[i].z
+                )
+
             );
         }
         aiFace face;

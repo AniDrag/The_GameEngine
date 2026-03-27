@@ -1,6 +1,6 @@
 ﻿#include "model.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include "material.h"
+#include "../Materials/material.h"
 namespace core {
     void Model::render(GLenum drawMode) const{
 
@@ -44,6 +44,7 @@ namespace core {
     void Model::attachShader(std::shared_ptr<Shader>& pShader) {
         shader = pShader; // store shader for THIS model
     }
+    void setMaterial(std::shared_ptr<Material> mat) { material = mat; }
     
    
 }

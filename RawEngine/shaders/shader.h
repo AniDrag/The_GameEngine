@@ -14,7 +14,10 @@ namespace core {
         unsigned int ID;
 
         Shader(GLuint vertexShader, GLuint fragmentShader);
-        ~Shader() = default;
+        ~Shader() { 
+            printf("%d\n", ID);
+            glDeleteProgram(ID);
+        };
 
         void use() const;
         void end() const;

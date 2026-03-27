@@ -45,13 +45,19 @@
     <ClCompile Include="core\Camera.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="core\material.cpp">
+    <ClCompile Include="resources\material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="shaders\shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="core\scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Raytracing\ray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Materials\PBRMaterial .cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -81,6 +87,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Raytracing\ray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Raytracing\color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Raytracing\vec3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

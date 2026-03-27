@@ -13,6 +13,7 @@
 #include "core/Camera.h"
 #include "shaders/shader.h"
 #include "core/scene.h"
+#include "core/Raytracing/ray.h";
 
 //#define MAC_CLION
 #define VSTUDIO
@@ -379,6 +380,8 @@ int main() {
     GLuint downsampleFBO;
     GLuint downsampleTexture;
 
+    int blurPasses = 1;
+
     int halfW = g_width / 2;
     int halfH = g_height / 2;
 
@@ -481,6 +484,7 @@ int main() {
                     ImGui::SliderFloat("Bloom Threshold", &activeScene->ppBloomThreshold, 0.0f, 2.0f);
                 }
                 ImGui::SliderFloat("Bloom Strength", &ppBloomStrength, 0.0f, 2.0f);
+				ImGui::SliderInt("Blur Passes", &blurPasses, 1, 10);
             }
 
             ImGui::Checkbox("Pixelize", &ppPixelize);
@@ -649,25 +653,28 @@ int main() {
             glBindTexture(GL_TEXTURE_2D, brightBuffer);
             screenQuadModel.render(GL_TRIANGLES);
 
-            // --- Horizontal blur ---
-            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[0]);
-            glViewport(0, 0, g_width / 2, g_height / 2);
-            glClear(GL_COLOR_BUFFER_BIT);
-            blurShader.use();
-            blurShader.setProperty("uTexture", 0);
-            blurShader.setProperty("uHorizontal", true);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, downsampleTexture);
-            screenQuadModel.render(GL_TRIANGLES);
+            for (int i = 0; i < blurPasses; i++) {
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+                // --- Horizontal blur ---
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[0]);
+                glViewport(0, 0, g_width / 2, g_height / 2);
+                glClear(GL_COLOR_BUFFER_BIT);
+                blurShader.use();
+                blurShader.setProperty("uTexture", 0);
+                blurShader.setProperty("uHorizontal", true);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, downsampleTexture);
+                screenQuadModel.render(GL_TRIANGLES);
 
-            // --- Vertical blur ---
-            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[1]);
-            glViewport(0, 0, g_width / 2, g_height / 2);      // <-- ADDED
-            glClear(GL_COLOR_BUFFER_BIT);
-            blurShader.setProperty("uHorizontal", false);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, pingpongBuffer[0]);
-            screenQuadModel.render(GL_TRIANGLES);
+                // --- Vertical blur ---
+                glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[1]);
+                glViewport(0, 0, g_width / 2, g_height / 2);
+                glClear(GL_COLOR_BUFFER_BIT);
+                blurShader.setProperty("uHorizontal", false);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, pingpongBuffer[0]);
+                screenQuadModel.render(GL_TRIANGLES);
+            }
 
             // --- Combine ---
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -730,7 +737,7 @@ int main() {
         currentTime = finishFrameTime;
     }
 
-    glDeleteProgram(modelShaderProgram.ID);
+   
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

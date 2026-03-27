@@ -37,7 +37,11 @@ namespace core {
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, normal));
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, uv));
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangents));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangents));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, uv));
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
@@ -68,6 +72,16 @@ namespace core {
                 glm::vec2(1, 1),
                 glm::vec2(0, 1)
         };
+
+        glm::vec3 edge1 = pos[2] - pos[1];
+        glm::vec3 edge2 = pos[3] - pos[1];
+        glm::vec2 deltaUV1 = uvs[2] - uvs[1];
+        glm::vec2 deltaUV2 = uvs[3] - uvs[1];
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+        // I this is how Open GL kind of did it?
+        const glm::vec3 tangents[] = { glm::vec3(1,0,0) };
+        const glm::vec3 bittangents[] = {glm::vec3(0,1,0)};
         const std::vector<GLuint> indices = {0, 1, 2, 3, 4, 5};
 
         std::vector<Vertex> vertexVector;
