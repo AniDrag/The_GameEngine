@@ -11,22 +11,32 @@ namespace core {
     private:
         std::vector<core::Mesh> meshes;
         glm::mat4 modelMatrix{ 1.0f };
+		glm::mat4 identityMatrix{ 1.0f };
         
     public:
-        std::shared_ptr<Shader> shader;
-        std::shared_ptr<Material> material;
-        Model(std::vector<core::Mesh> meshes) : meshes(meshes), modelMatrix(1) {};
+        Model(std::vector<core::Mesh> meshes) : meshes(meshes), modelMatrix(1.0f) {};
 
         void render(GLenum drawMode) const;
-        void position(glm::vec3& pPosition);
-        void translate(glm::vec3& translation);
-        void rotate(glm::vec3& axis, float radians);
-        void scale(glm::vec3& scale);
+
+		// Transformation functions
+        void position(const glm::vec3& pPosition);
+        void translate(const glm::vec3& translation);
+        void rotate(const glm::vec3& axis, float radians);
+        void scale(const glm::vec3& scale);
+
         glm::mat4 getModelMatrix() const;
-        const std::shared_ptr<Material>& getMaterial() const {
-            return material;
-        }
-        void setMaterial(std::shared_ptr<Material> mat) { material = mat; }
-        void attachShader( std::shared_ptr<Shader>& shader);
+
+		// Material accessors
+        std::shared_ptr<Material> material;
+        const std::shared_ptr<Material>& getMaterial() const;
+        void setMaterial(std::shared_ptr<Material> mat);
+
+        //void ImGuiRender() {
+        //    if (material) {
+        //        material->onGui();
+        //    }
+        //
+		//}
     };
+
 };

@@ -15,7 +15,9 @@ namespace core {
 
         Shader(GLuint vertexShader, GLuint fragmentShader);
         ~Shader() { 
-            printf("%d\n", ID);
+#ifndef NDEBUG
+            printf("[Shader destroyed] ID: %u\n", ID);
+#endif
             glDeleteProgram(ID);
         };
 

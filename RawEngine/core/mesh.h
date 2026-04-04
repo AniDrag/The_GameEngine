@@ -14,6 +14,7 @@ namespace core {
         GLuint EBO; // stores indicies for redrawing array
     public:
         Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices);
+
         void render(GLenum& drawMode) const;
         static Mesh generateQuad();
     private:

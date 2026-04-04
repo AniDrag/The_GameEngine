@@ -130,13 +130,15 @@
   <ItemGroup>
     <ClCompile Include="core\assimpLoader.cpp" />
     <ClCompile Include="core\Camera.cpp" />
-    <ClCompile Include="resources\material.cpp" />
+    <ClCompile Include="core\debugTexture.cpp" />
+    <ClCompile Include="Materials\LitMaterial.cpp" />
     <ClCompile Include="core\mesh.cpp" />
     <ClCompile Include="core\model.cpp" />
     <ClCompile Include="core\Raytracing\ray.cpp" />
     <ClCompile Include="core\scene.cpp" />
     <ClCompile Include="core\texture.cpp" />
-    <ClCompile Include="Materials\PBRMaterial .cpp" />
+    <ClCompile Include="Materials\lit_material.h" />
+    <ClCompile Include="Materials\material.cpp" />
     <ClCompile Include="RawEngine.cpp" />
     <ClCompile Include="shaders\shader.cpp" />
   </ItemGroup>
@@ -146,12 +148,15 @@
     <ClInclude Include="core\GameObject.h" />
     <ClInclude Include="core\mesh.h" />
     <ClInclude Include="core\model.h" />
+    <ClInclude Include="core\postProcessing.h" />
     <ClInclude Include="core\Raytracing\color.h" />
     <ClInclude Include="core\Raytracing\vec3.h" />
     <ClInclude Include="core\scene.h" />
     <ClInclude Include="core\texture.h" />
     <ClInclude Include="core\vertex.h" />
     <ClInclude Include="core\Raytracing\ray.h" />
+    <ClInclude Include="FBO\Blurr_fbo.h" />
+    <ClInclude Include="FBO\fbo.h" />
     <ClInclude Include="shaders\shader.h" />
   </ItemGroup>
   <ItemGroup>

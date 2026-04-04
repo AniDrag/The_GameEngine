@@ -14,6 +14,7 @@
 #include "shaders/shader.h"
 #include "core/scene.h"
 #include "core/Raytracing/ray.h";
+#include "Materials/lit_material.h"
 
 //#define MAC_CLION
 #define VSTUDIO
@@ -196,7 +197,7 @@ int main() {
     char infoLog[512];
 	core::Shader modelShaderProgram(modelVertexShader, fragmentShader);
    // core::Shader textureShaderProgram(modelVertexShader, fragmentShader);
-    core::Shader litShaderProgram(modelVertexShader, litShader);
+    const auto litShaderProgramPtr = std::make_shared<core::Shader>(modelVertexShader, litShader);
     core::Shader textureShaderProgram(textureVertexShader, textureShader);
 
     core::Shader postProcessShader(textureVertexShader, postProcessFS);    
@@ -237,14 +238,30 @@ int main() {
     core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     //core::Model lightBulbSuzane = core::AssimpLoader::loadModel("models/sz.obj");
     core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");// CMGaTo_crop.png
-    suzanne.material.addAlbedoTexture("textures/CMGaTo_crop.png");
-	auto litShaderProgramPtr = std::make_shared<core::Shader>(litShaderProgram); // one attachment here material gets ye worked like butter
-    //Even textures loaded
 
-    suzanne.attachShader(litShaderProgramPtr);
+    auto rockMat = std::make_shared<core::LitMaterial>(
+        litShaderProgramPtr,
+        "rock_wall_13_diff_1k.jpg",
+        "rock_wall_13_nor_gl_1k.jpg",
+        "rock_wall_13_arm_1k.jpg",
+        "rock_wall_13_arm_1k.jpg"
+    );
 
+    auto stoneMat = std::make_shared<core::LitMaterial>(
+        litShaderProgramPtr,
+        "stone_embedded_concrete_diff_1k.jpg",
+        "stone_embedded_concrete_nor_gl_1k.jpg",
+        "stone_embedded_concrete_arm_1k.jpg",
+        "stone_embedded_concrete_arm_1k.jpg"
+    );
 
-   
+    auto volcanicMat = std::make_shared<core::LitMaterial>(
+        litShaderProgramPtr,
+        "volcanic_herringbone_01_diff_1k.jpg",
+        "volcanic_herringbone_01_nor_gl_1k.jpg",
+        "volcanic_herringbone_01_arm_1k.jpg",
+        "volcanic_herringbone_01_arm_1k.jpg"
+    );
 
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -268,8 +285,9 @@ int main() {
         core::Scene SceneOne(window);
 
         // Assign shader to models before adding to scene
-        auto suzanneModel1 = std::make_shared<core::Model>(suzanne);
-        SceneOne.addModel(suzanneModel1);
+        auto rockModel = std::make_shared<core::Model>(suzanne);
+        rockModel->setMaterial(rockMat);
+        SceneOne.addModel(rockModel);
 
 
 	    scenes.push_back(&SceneOne);
@@ -280,11 +298,14 @@ int main() {
         core::Scene SceneTwo(window);
 
 
-        auto suzanneModel2 = std::make_shared<core::Model>(suzanne);
-        SceneTwo.addModel(suzanneModel2);
-        SceneTwo.addModel(suzanneModel1);
-        glm::vec3 positionSuzi = glm::vec3(-2.0f, 0.0f, 0.0f);
-		suzanneModel1->position(positionSuzi);
+        auto stoneModel = std::make_shared<core::Model>(suzanne);
+        rockModel->setMaterial(stoneMat);
+        auto volcaniModel = std::make_shared<core::Model>(suzanne);
+        rockModel->setMaterial(volcanicMat);
+        SceneTwo.addModel(stoneModel);
+        SceneTwo.addModel(volcaniModel);
+        glm::vec3 positionSuzi = glm::vec3(-3.0f, 0.0f, 0.0f);
+        stoneModel->position(positionSuzi);
 
         scenes.push_back(&SceneTwo);
 
@@ -415,7 +436,8 @@ int main() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0);
     }
-
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        printf("ERROR: Blurr FBO incomplete!\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
@@ -491,6 +513,11 @@ int main() {
             if (ppPixelize)
                 ImGui::SliderFloat("Pixel Size", &ppPixelSize, 16.0f, 512.0f);
         }
+        activeScene->ImGuiRender();
+#pragma region Will be rendered by scene
+
+
+
         // ------------------------------------------------
         // Camera
         // ------------------------------------------------
@@ -560,7 +587,7 @@ int main() {
                 }
             }
         }
-
+#pragma endregion
         // ------------------------------------------------
         // Application
         // ------------------------------------------------

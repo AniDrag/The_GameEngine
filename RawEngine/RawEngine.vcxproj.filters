@@ -45,9 +45,6 @@
     <ClCompile Include="core\Camera.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="resources\material.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="shaders\shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,7 +54,16 @@
     <ClCompile Include="core\Raytracing\ray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Materials\PBRMaterial .cpp">
+    <ClCompile Include="Materials\lit_material.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Materials\LitMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\debugTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Materials\material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -96,6 +102,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="core\Raytracing\vec3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FBO\fbo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FBO\Blurr_fbo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="core\postProcessing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

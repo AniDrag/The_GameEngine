@@ -4,6 +4,7 @@
 namespace core {
     Shader::Shader(GLuint vertexShader, GLuint fragmentShader) { // It does  i did it before and was fien,
       
+        
         int success;
         char infoLog[512];
         ID = glCreateProgram();
@@ -13,8 +14,10 @@ namespace core {
         glGetProgramiv(ID, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(ID, 512, NULL, infoLog);
-            printf("Error! Making Shader Program: %s\n", infoLog);
-		}
+            printf("SHADER LINK ERROR: %s\n", infoLog);
+            glDeleteProgram(ID);
+            ID = 0;
+        }
 
         
     }

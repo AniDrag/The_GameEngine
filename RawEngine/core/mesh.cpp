@@ -1,7 +1,8 @@
 #include "mesh.h"
 
 namespace core {
-    Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices) : vertices(vertices), indices(indices) {
+    Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices) 
+        : vertices(vertices), indices(indices) {
         setupBuffers();
     }
 
@@ -17,12 +18,17 @@ namespace core {
         // Uploads data to GPU:
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         // Vertex data (positions, normals, UVs)
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), &vertices[0],
-                     GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizei>(sizeof(Vertex) * vertices.size()), 
+            &vertices[0], 
+            GL_STATIC_DRAW);
+
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);// Indices (triangle definitions)
         // Send the triangle point indices to the GPU:
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizei>(sizeof(unsigned int) * indices.size()),
-                     &indices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizei>(sizeof(unsigned int) * indices.size()), 
+            &indices[0],
+            GL_STATIC_DRAW);
+
 
         glEnableVertexAttribArray(0);
 
@@ -46,51 +52,25 @@ namespace core {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    Mesh Mesh::generateQuad() {
-        const glm::vec3 pos[] = {
-                glm::vec3(-1.0f, -1.0f, 0.0f),
-                glm::vec3(1.0f, -1.0f, 0.0f),
-                glm::vec3(-1.0f, 1.0f, 0.0f),
-                glm::vec3(1.0f, -1.0f, 0.0f),
-                glm::vec3(1.0f, 1.0f, 0.0f),
-                glm::vec3(-1.0f, 1.0f, 0.0f),
-        };
-
-        const glm::vec3 normals[] = {
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f)
-        };
-        const glm::vec2 uvs[] = {
-                glm::vec2(0, 0),
-                glm::vec2(1, 0),
-                glm::vec2(0, 1),
-                glm::vec2(1, 0),
-                glm::vec2(1, 1),
-                glm::vec2(0, 1)
-        };
-
-        glm::vec3 edge1 = pos[2] - pos[1];
-        glm::vec3 edge2 = pos[3] - pos[1];
-        glm::vec2 deltaUV1 = uvs[2] - uvs[1];
-        glm::vec2 deltaUV2 = uvs[3] - uvs[1];
-
-        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-        // I this is how Open GL kind of did it?
-        const glm::vec3 tangents[] = { glm::vec3(1,0,0) };
-        const glm::vec3 bittangents[] = {glm::vec3(0,1,0)};
-        const std::vector<GLuint> indices = {0, 1, 2, 3, 4, 5};
-
+     Mesh Mesh::generateQuad() {
         std::vector<Vertex> vertexVector;
         vertexVector.reserve(6);
-        for (int i = 0; i < 6; ++i) {
-            vertexVector.emplace_back(pos[i], normals[i], uvs[i]);
-        }
 
-        return Mesh(vertexVector, indices);
+        glm::vec3 n(0.0f, 0.0f, 1.0f);
+        glm::vec3 t(1.0f, 0.0f, 0.0f);
+        glm::vec3 b(0.0f, 1.0f, 0.0f);
+
+        vertexVector.emplace_back(glm::vec3(-1.0f, -1.0f, 0.0f), n, glm::vec2(0.0f, 0.0f), t, b);
+        vertexVector.emplace_back(glm::vec3( 1.0f, -1.0f, 0.0f), n, glm::vec2(1.0f, 0.0f), t, b);
+        vertexVector.emplace_back(glm::vec3(-1.0f,  1.0f, 0.0f), n, glm::vec2(0.0f, 1.0f), t, b);
+
+        vertexVector.emplace_back(glm::vec3( 1.0f, -1.0f, 0.0f), n, glm::vec2(1.0f, 0.0f), t, b);
+        vertexVector.emplace_back(glm::vec3( 1.0f,  1.0f, 0.0f), n, glm::vec2(1.0f, 1.0f), t, b);
+        vertexVector.emplace_back(glm::vec3(-1.0f,  1.0f, 0.0f), n, glm::vec2(0.0f, 1.0f), t, b);
+
+        std::vector<GLuint> indices = { 0, 1, 2, 3, 4, 5 };
+
+        return Mesh(std::move(vertexVector), std::move(indices));
     }
 
     void Mesh::render(GLenum& drawMode) const {

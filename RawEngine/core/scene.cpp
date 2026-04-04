@@ -1,4 +1,5 @@
 ﻿#include "scene.h"
+#include <imgui.h>
 
 namespace core
 {
@@ -38,7 +39,7 @@ namespace core
             for (const auto& model : models)
             {
                 // model MUST already have a shader attached
-                auto shader = model->shader;
+                auto shader = model->material->shader;
                 if (!shader || !model->material) continue;
 
                 shader->use();
@@ -52,10 +53,82 @@ namespace core
                 shader->setProperty("modelMatrix", model->getModelMatrix());
 
                 // Bind material‑specific uniforms and textures
-                model->material->bind(*shader);
+                //model->material->bind();
 
                 model->render(drawMode);
             }
         }
     
+
+        void Scene::ImGuiRender()
+        {
+        // ------------------------------------------------
+        // Camera
+        // ------------------------------------------------
+            if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+                //auto& cam = activeScene->sceneCamera;
+
+                ImGui::Checkbox("Enable Rotation", &sceneCamera.enableRotation);
+                ImGui::SliderFloat("Mouse Sensitivity", &sceneCamera.mouseSensitivity, 0.001f, 0.2f, "%.4f");
+
+                ImGui::Separator();
+                ImGui::Text("Position");
+                ImGui::DragFloat3("##CamPos", &sceneCamera.position.x, 0.05f);
+
+            }
+
+            // ------------------------------------------------
+            // Lighting
+            // ------------------------------------------------
+            if (ImGui::CollapsingHeader("Lighting", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+                ImGui::Text("Directional Light");
+
+
+                ImGui::DragFloat3(
+                    "Direction",
+                    &lightDirection.x,
+                    0.05f, -1.0f, 1.0f
+                );
+
+                ImGui::ColorEdit3(
+                    "Color",
+                    &lightColor.x
+                );
+
+                ImGui::SliderFloat(
+                    "Intensity",
+                    &lightIntensity,
+                    0.01f, 1.0f
+                );
+
+            }
+
+            // ------------------------------------------------
+            // Render Settings
+            // ------------------------------------------------
+            if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
+                const char* drawModes[] = {
+                    "Triangles", "Wireframe", "Points",
+                    "Line Strip", "Line Loop",
+                    "Triangle Strip", "Triangle Fan"
+                };
+
+                static int currentDrawMode = 0;
+
+                if (ImGui::Combo("Draw Mode", &currentDrawMode, drawModes, IM_ARRAYSIZE(drawModes))) {
+                    switch (currentDrawMode) {
+                    case 0: drawMode = GL_TRIANGLES; break;
+                    case 1: drawMode = GL_LINES; break;
+                    case 2: drawMode = GL_POINTS; break;
+                    case 3: drawMode = GL_LINE_STRIP; break;
+                    case 4: drawMode = GL_LINE_LOOP; break;
+                    case 5: drawMode = GL_TRIANGLE_STRIP; break;
+                    case 6: drawMode = GL_TRIANGLE_FAN; break;
+                    }
+                }
+
+            }
+		}
 }

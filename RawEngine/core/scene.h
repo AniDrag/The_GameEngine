@@ -14,6 +14,7 @@ namespace core {
 
         void addModel(std::shared_ptr<Model> model);
         void render();
+        void ImGuiRender();
 
         // camera owned by scene
         Camera sceneCamera;
